@@ -1,6 +1,6 @@
 //! Plugin manager with dependency resolution.
 
-use derivative::Derivative;
+use educe::Educe;
 use once_cell::sync::OnceCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
@@ -252,11 +252,11 @@ impl<M, T> Default for Ruler<M, T> {
 ///
 /// Result of [Ruler::add](Ruler::add), allows customizing the position of each rule.
 ///
-#[derive(Derivative)]
-#[derivative(Debug)]
+#[derive(Educe)]
+#[educe(Debug)]
 pub struct RuleItem<M, T> {
     marks: Vec<M>,
-    #[derivative(Debug = "ignore")]
+    #[educe(Debug(ignore))]
     value: T,
     prio: RuleItemPriority,
     cons: Vec<RuleItemConstraint<M>>,

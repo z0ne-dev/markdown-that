@@ -4,24 +4,23 @@
 //!
 //! <https://spec.commonmark.org/0.30/#link-reference-definition>
 //!
-//! This plugin parses markdown link references. Check documentation on [ReferenceMap]
-//! to see how you can use and/or extend it if you have external source for references.
+//! This plugin parses Markdown link references. Check the documentation on [ReferenceMap]
+//! to see how you can use and/or extend it if you have an external source for references.
 //!
-use derivative::Derivative;
-use derive_more::{Deref, DerefMut};
-use downcast_rs::{impl_downcast, Downcast};
-use std::collections::HashMap;
-use std::fmt::Debug;
-
 use crate::common::utils::normalize_reference;
 use crate::generics::inline::full_link;
 use crate::parser::block::{BlockRule, BlockState};
 use crate::parser::extset::RootExt;
 use crate::{MarkdownThat, Node, NodeValue};
+use downcast_rs::{Downcast, impl_downcast};
+use educe::Educe;
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::ops::{Deref, DerefMut};
 
 /// Storage for parsed references
 ///
-/// if you have some external source for your link references, you can add them like this:
+/// If you have some external source for your link references, you can add them like this:
 ///
 /// ```rust
 /// use markdown_that::parser::block::builtin::BlockParserRule;
@@ -35,6 +34,10 @@ use crate::{MarkdownThat, Node, NodeValue};
 /// #[derive(Debug, Default)]
 /// struct RefMapOverride(DefaultReferenceMap);
 /// impl CustomReferenceMap for RefMapOverride {
+///     fn insert(&mut self, label: String, destination: String, title: Option<String>) -> bool {
+///         self.0.insert(label, destination, title)
+///     }
+///
 ///     fn get(&self, label: &str) -> Option<(&str, Option<&str>)> {
 ///         // override a specific link
 ///         if label == "rust" {
@@ -43,12 +46,7 @@ use crate::{MarkdownThat, Node, NodeValue};
 ///                 Some("The Rust Language"),
 ///             ));
 ///         }
-///
 ///         self.0.get(label)
-///     }
-///
-///     fn insert(&mut self, label: String, destination: String, title: Option<String>) -> bool {
-///         self.0.insert(label, destination, title)
 ///     }
 /// }
 ///
@@ -70,7 +68,7 @@ use crate::{MarkdownThat, Node, NodeValue};
 /// );
 /// ```
 ///
-/// You can also view all references that user created by adding the following rule:
+/// You can also view all references that the user created by adding the following rule:
 ///
 /// ```rust
 /// use markdown_that::parser::core::{CoreRule, Root};
@@ -95,10 +93,22 @@ use crate::{MarkdownThat, Node, NodeValue};
 /// assert_eq!(labels, ["hello"]);
 /// ```
 ///
-#[derive(Debug, Deref, DerefMut)]
-#[deref(forward)]
-#[deref_mut(forward)]
+#[derive(Debug)]
 pub struct ReferenceMap(Box<dyn CustomReferenceMap>);
+
+impl Deref for ReferenceMap {
+    type Target = Box<dyn CustomReferenceMap>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for ReferenceMap {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 impl ReferenceMap {
     pub fn new(custom_map: impl CustomReferenceMap + 'static) -> Self {
@@ -114,8 +124,8 @@ impl Default for ReferenceMap {
 
 impl RootExt for ReferenceMap {}
 
-pub trait CustomReferenceMap : Debug + Downcast + Send + Sync {
-    /// Insert new element to the reference map. You may return false if it's not a valid label to stop parsing.
+pub trait CustomReferenceMap: Debug + Downcast + Send + Sync {
+    /// Insert a new element to the reference map. You may return false if it's not a valid label to stop parsing.
     fn insert(&mut self, label: String, destination: String, title: Option<String>) -> bool;
 
     /// Get an element referenced by `label` from the map, returns destination and optional title.
@@ -133,33 +143,38 @@ impl DefaultReferenceMap {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&str, &str, Option<&str>)> {
-        Box::new(self.0.iter().map(|(a, b)| {
-            (a.label.as_str(), b.destination.as_str(), b.title.as_deref())
-        }))
+        Box::new(
+            self.0
+                .iter()
+                .map(|(a, b)| (a.label.as_str(), b.destination.as_str(), b.title.as_deref())),
+        )
     }
 }
 
 impl CustomReferenceMap for DefaultReferenceMap {
     fn insert(&mut self, label: String, destination: String, title: Option<String>) -> bool {
-        let Some(key) = ReferenceMapKey::new(label) else { return false; };
-        self.0.entry(key)
+        let Some(key) = ReferenceMapKey::new(label) else {
+            return false;
+        };
+        self.0
+            .entry(key)
             .or_insert(ReferenceMapEntry::new(destination, title));
         true
     }
 
     fn get(&self, label: &str) -> Option<(&str, Option<&str>)> {
         let key = ReferenceMapKey::new(label.to_owned())?;
-        self.0.get(&key)
+        self.0
+            .get(&key)
             .map(|r| (r.destination.as_str(), r.title.as_deref()))
     }
 }
 
-#[derive(Derivative)]
-#[derivative(Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Debug, Default, Educe, Eq)]
+#[educe(Hash, PartialEq)]
 /// Reference label
 struct ReferenceMapKey {
-    #[derivative(PartialEq = "ignore")]
-    #[derivative(Hash = "ignore")]
+    #[educe(PartialEq(ignore), Hash(ignore))]
     pub label: String,
     normalized: String,
 }
@@ -190,7 +205,7 @@ impl ReferenceMapEntry {
     }
 }
 
-/// Add plugin that parses markdown link references
+/// Add a plugin that parses Markdown link references
 pub fn add(md: &mut MarkdownThat) {
     md.block.add_rule::<ReferenceScanner>();
 }
@@ -213,18 +228,23 @@ impl BlockRule for ReferenceScanner {
     }
 
     fn run(state: &mut BlockState) -> Option<(Node, usize)> {
-
-        if state.line_indent(state.line) >= state.md.max_indent { return None; }
+        if state.line_indent(state.line) >= state.md.max_indent {
+            return None;
+        }
 
         let mut chars = state.get_line(state.line).chars();
 
-        let Some('[') = chars.next() else { return None; };
+        let Some('[') = chars.next() else {
+            return None;
+        };
 
-        // Simple check to quickly interrupt scan on [link](url) at the start of line.
-        // Can be useful on practice: https://github.com/markdown-it/markdown-it/issues/54
+        // Simple check to quickly interrupt the scan on [link](url) at the start of the line.
+        // Can be useful in practice: https://github.com/markdown-it/markdown-it/issues/54
         loop {
             match chars.next() {
-                Some('\\') => { chars.next(); },
+                Some('\\') => {
+                    chars.next();
+                }
                 Some(']') => {
                     if let Some(':') = chars.next() {
                         break;
@@ -232,7 +252,7 @@ impl BlockRule for ReferenceScanner {
                         return None;
                     }
                 }
-                Some(_) => {},
+                Some(_) => {}
                 None => break,
             }
         }
@@ -244,16 +264,22 @@ impl BlockRule for ReferenceScanner {
         'outer: loop {
             next_line += 1;
 
-            if next_line >= state.line_max || state.is_empty(next_line) { break; }
+            if next_line >= state.line_max || state.is_empty(next_line) {
+                break;
+            }
 
-            // this may be a code block normally, but after paragraph
+            // this may be a code block normally, but after a paragraph
             // it's considered a lazy continuation regardless of what's there
-            if state.line_indent(next_line) >= state.md.max_indent { continue; }
+            if state.line_indent(next_line) >= state.md.max_indent {
+                continue;
+            }
 
-            // quirk for blockquotes, this line should already be checked by that rule
-            if state.line_offsets[next_line].indent_nonspace < 0 { continue; }
+            // quirk for blockquotes, that rule should already check this line
+            if state.line_offsets[next_line].indent_nonspace < 0 {
+                continue;
+            }
 
-            // Some tags can terminate paragraph without empty line.
+            // Some tags can terminate a paragraph without an empty line.
             let old_state_line = state.line;
             state.line = next_line;
             if state.test_rules_at_line() {
@@ -283,18 +309,22 @@ impl BlockRule for ReferenceScanner {
                         lines += 1;
                     }
                 }
-                Some(_) => {},
+                Some(_) => {}
                 None => return None,
             }
         }
 
-        let Some((_, ':')) = chars.next() else { return None; };
+        let Some((_, ':')) = chars.next() else {
+            return None;
+        };
 
         // [label]:   destination   'title'
         //         ^^^ skip optional whitespace here
         let mut pos = label_end + 2;
         while let Some((_, ch @ (' ' | '\t' | '\n'))) = chars.next() {
-            if ch == '\n' { lines += 1; }
+            if ch == '\n' {
+                lines += 1;
+            }
             pos += 1;
         }
 
@@ -302,7 +332,9 @@ impl BlockRule for ReferenceScanner {
         //            ^^^^^^^^^^^ parse this
         let href;
         if let Some(res) = full_link::parse_link_destination(str, pos, str.len()) {
-            if pos == res.pos { return None; }
+            if pos == res.pos {
+                return None;
+            }
             href = state.md.link_formatter.normalize_link(&res.str);
             state.md.link_formatter.validate_link(&href)?;
             pos = res.pos;
@@ -311,7 +343,7 @@ impl BlockRule for ReferenceScanner {
             return None;
         }
 
-        // save cursor state, we could require to rollback later
+        // to save the cursor state, we could require rolling back later
         let dest_end_pos = pos;
         let dest_end_lines = lines;
 
@@ -320,7 +352,9 @@ impl BlockRule for ReferenceScanner {
         let start = pos;
         let mut chars = str[pos..].chars();
         while let Some(ch @ (' ' | '\t' | '\n')) = chars.next() {
-            if ch == '\n' { lines += 1; }
+            if ch == '\n' {
+                lines += 1;
+            }
             pos += 1;
         }
 
@@ -345,7 +379,7 @@ impl BlockRule for ReferenceScanner {
                 Some(' ' | '\t') => pos += 1,
                 Some('\n') | None => break,
                 Some(_) if title.is_some() => {
-                    // garbage at the end of the line after title,
+                    // garbage at the end of the line after the title,
                     // but it could still be a valid reference if we roll back
                     title = None;
                     pos = dest_end_pos;
@@ -360,15 +394,17 @@ impl BlockRule for ReferenceScanner {
         }
 
         let references = state.root_ext.get_or_insert_default::<ReferenceMap>();
-        if !references.insert(str[1..label_end].to_owned(), href.clone(), title.clone()) { return None; }
+        if !references.insert(str[1..label_end].to_owned(), href.clone(), title.clone()) {
+            return None;
+        }
 
-        Some((Node::new(
-            Definition { 
-                label: str[1..label_end].to_owned(), 
-                destination: href, 
-                title
-            }), 
-            lines + 1
+        Some((
+            Node::new(Definition {
+                label: str[1..label_end].to_owned(),
+                destination: href,
+                title,
+            }),
+            lines + 1,
         ))
     }
 }
