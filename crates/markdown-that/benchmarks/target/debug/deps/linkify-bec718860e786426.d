@@ -1,0 +1,10 @@
+/home/kura/Projects/markdown-that/benchmarks/target/debug/deps/liblinkify-bec718860e786426.rmeta: /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/lib.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/domains.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/email.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/finder.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/scanner.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/url.rs
+
+/home/kura/Projects/markdown-that/benchmarks/target/debug/deps/linkify-bec718860e786426.d: /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/lib.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/domains.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/email.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/finder.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/scanner.rs /home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/url.rs
+
+/home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/lib.rs:
+/home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/domains.rs:
+/home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/email.rs:
+/home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/finder.rs:
+/home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/scanner.rs:
+/home/kura/.local/share/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkify-0.10.0/src/url.rs:
