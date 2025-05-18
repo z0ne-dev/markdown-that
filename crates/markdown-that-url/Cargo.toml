@@ -1,0 +1,18 @@
+[package]
+name = "markdown-that-url"
+description = "URL parser and formatter that gracefully handles invalid input."
+documentation = "https://docs.rs/mdurl"
+keywords = ["url", "parser"]
+categories = ["parser-implementations", "web-programming", "encoding"]
+version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+edition.workspace = true
+
+
+[dependencies]
+idna = "1.0.3"
+regex = "1.11.1"

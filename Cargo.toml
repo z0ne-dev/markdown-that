@@ -1,19 +1,31 @@
-[package]
-name = "markdown-that"
+[workspace]
+members = ["crates/*"]
+
+[workspace.package]
 version = "0.7.0"
 authors = [
     "Christopher König <me@kurabloodlust.eu>",
     "Alex Kocharin <alex@kocharin.ru>"
 ]
-description = "Rust port of popular markdown-it.js library."
-documentation = "https://docs.rs/markdown-that"
 homepage = "https://github.com/z0ne-dev/markdown-that"
 repository = "https://github.com/z0ne-dev/markdown-that"
 readme = "README.md"
-keywords = ["markdown", "commonmark"]
 license = "MIT"
-categories = ["text-processing", "parsing"]
 edition = "2024"
+
+[package]
+name = "markdown-that"
+description = "Rust port of popular markdown-it.js library."
+documentation = "https://docs.rs/markdown-that"
+categories = ["text-processing", "parsing"]
+keywords = ["markdown", "commonmark"]
+version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+edition.workspace = true
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
