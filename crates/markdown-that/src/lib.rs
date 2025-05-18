@@ -19,7 +19,6 @@
 #![allow(clippy::uninlined_format_args)]
 
 pub mod common;
-pub mod examples;
 pub mod generics;
 pub mod parser;
 pub mod plugins;
