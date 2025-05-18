@@ -313,21 +313,9 @@ pub fn is_punct_char(ch: char) -> bool {
 
     match get_general_category(ch) {
         // P
-        ConnectorPunctuation | DashPunctuation | OpenPunctuation | ClosePunctuation |
-        InitialPunctuation | FinalPunctuation | OtherPunctuation => true,
-
-        // L
-        UppercaseLetter | LowercaseLetter | TitlecaseLetter | ModifierLetter | OtherLetter |
-        // M
-        NonspacingMark | SpacingMark | EnclosingMark |
-        // N
-        DecimalNumber | LetterNumber | OtherNumber |
-        // S
-        MathSymbol | CurrencySymbol | ModifierSymbol | OtherSymbol |
-        // Z
-        SpaceSeparator | LineSeparator | ParagraphSeparator |
-        // C
-        Control | Format | Surrogate | PrivateUse | Unassigned => false
+        ConnectorPunctuation | DashPunctuation | OpenPunctuation | ClosePunctuation
+        | InitialPunctuation | FinalPunctuation | OtherPunctuation => true,
+        _ => false,
     }
 }
 
