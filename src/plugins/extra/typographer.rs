@@ -30,15 +30,14 @@
 //! - Reserved: `(r)` to `®`
 //! - Trademark: `(tm)` to `™`
 
-use once_cell::sync::Lazy;
-use regex::Regex;
-use std::borrow::Cow;
-
 use crate::parser::core::CoreRule;
 use crate::parser::inline::Text;
 use crate::{MarkdownThat, Node};
+use regex::Regex;
+use std::borrow::Cow;
+use std::sync::LazyLock;
 
-static REPLACEMENTS: Lazy<Box<[(Regex, &'static str)]>> = Lazy::new(|| {
+static REPLACEMENTS: LazyLock<Box<[(Regex, &'static str)]>> = LazyLock::new(|| {
     Box::new([
         (Regex::new(r"\+-").unwrap(), "±"),
         (Regex::new(r"\.{2,}").unwrap(), "…"),
@@ -61,8 +60,9 @@ static REPLACEMENTS: Lazy<Box<[(Regex, &'static str)]>> = Lazy::new(|| {
         ),
     ])
 });
-static SCOPED_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\((c|tm|r)\)").unwrap());
-static RARE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\+-|\.\.|\?\?\?\?|!!!!|,,|--").unwrap());
+static SCOPED_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\((c|tm|r)\)").unwrap());
+static RARE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\+-|\.\.|\?\?\?\?|!!!!|,,|--").unwrap());
 
 fn replace_abbreviation(input: &str) -> &'static str {
     match input.to_lowercase().as_str() {
@@ -82,7 +82,9 @@ pub struct TypographerRule;
 impl CoreRule for TypographerRule {
     fn run(root: &mut Node, _: &MarkdownThat) {
         root.walk_mut(|node, _| {
-            let Some(text_node) = node.cast_mut::<Text>() else { return; };
+            let Some(text_node) = node.cast_mut::<Text>() else {
+                return;
+            };
 
             if SCOPED_RE.is_match(&text_node.content) {
                 text_node.content = SCOPED_RE

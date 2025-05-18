@@ -1,6 +1,7 @@
 //! Inline rule chain
-use once_cell::sync::OnceCell;
+
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 mod state;
 pub use state::*;
@@ -32,7 +33,7 @@ type RuleFns = (
 pub struct InlineParser {
     ruler: Ruler<TypeKey, RuleFns>,
     text_charmap: HashMap<char, Vec<TypeKey>>,
-    text_impl: OnceCell<TextScannerImpl>,
+    text_impl: OnceLock<TextScannerImpl>,
 }
 
 impl InlineParser {

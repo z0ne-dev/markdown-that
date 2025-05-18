@@ -1,5 +1,4 @@
-use once_cell::sync::Lazy;
-
+use std::sync::LazyLock;
 
 #[test]
 fn title_example() {
@@ -14,7 +13,7 @@ fn title_example() {
 
 #[test]
 fn lazy_singleton() {
-    static MD : Lazy<markdown_that::MarkdownThat> = Lazy::new(|| {
+    static MD: LazyLock<markdown_that::MarkdownThat> = LazyLock::new(|| {
         let mut parser = markdown_that::MarkdownThat::new();
         markdown_that::plugins::cmark::add(&mut parser);
         parser
@@ -45,7 +44,6 @@ fn no_max_indent() {
     assert_eq!(result, "<p>paragraph</p>\n<ul>\n<li>item</li>\n</ul>\n");
 }
 
-
 /*#[test]
 fn no_block_parser() {
     let md = &mut markdown_that::MarkdownThat::new();
@@ -57,7 +55,11 @@ fn no_block_parser() {
 }*/
 
 fn run(input: &str, output: &str) {
-    let output = if output.is_empty() { "".to_owned() } else { output.to_owned() + "\n" };
+    let output = if output.is_empty() {
+        "".to_owned()
+    } else {
+        output.to_owned() + "\n"
+    };
     let md = &mut markdown_that::MarkdownThat::new();
     markdown_that::plugins::cmark::add(md);
     markdown_that::plugins::html::add(md);
@@ -85,8 +87,9 @@ mod markdown_that_rs_extras {
 
     #[test]
     fn tab_offset_in_lists() {
-        run("   > -\tfoo\n   >\n   >         foo\n",
-r#"<blockquote>
+        run(
+            "   > -\tfoo\n   >\n   >         foo\n",
+            r#"<blockquote>
 <ul>
 <li>
 <p>foo</p>
@@ -94,7 +97,8 @@ r#"<blockquote>
 </code></pre>
 </li>
 </ul>
-</blockquote>"#);
+</blockquote>"#,
+        );
     }
 
     #[test]
@@ -117,14 +121,18 @@ r#"<blockquote>
 
     #[test]
     fn beautify_links() {
-        run("<https://www.reddit.com/r/programming/comments/vxttiq/comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3>",
-            "<p><a href=\"https://www.reddit.com/r/programming/comments/vxttiq/comment/ifyqsqt/?utm_source=reddit&amp;utm_medium=web2x&amp;context=3\">www.reddit.com/r/programming/comments/…/ifyqsqt/?…</a></p>");
+        run(
+            "<https://www.reddit.com/r/programming/comments/vxttiq/comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3>",
+            "<p><a href=\"https://www.reddit.com/r/programming/comments/vxttiq/comment/ifyqsqt/?utm_source=reddit&amp;utm_medium=web2x&amp;context=3\">www.reddit.com/r/programming/comments/…/ifyqsqt/?…</a></p>",
+        );
     }
 
     #[test]
     fn regression_test_newlines_with_images() {
-        run("There is a newline in this image  ![here\nit is](https://github.com/executablebooks/)",
-            "<p>There is a newline in this image  <img src=\"https://github.com/executablebooks/\" alt=\"here\nit is\"></p>");
+        run(
+            "There is a newline in this image  ![here\nit is](https://github.com/executablebooks/)",
+            "<p>There is a newline in this image  <img src=\"https://github.com/executablebooks/\" alt=\"here\nit is\"></p>",
+        );
     }
 
     #[test]
@@ -184,10 +192,7 @@ r#"<blockquote>
             }
         });
 
-        assert_eq!(
-            collected,
-            vec!["inline", "block", "core"],
-        );
+        assert_eq!(collected, vec!["inline", "block", "core"],);
     }
 }
 
@@ -199,4 +204,3 @@ mod examples {
         main();
     }
 }
-

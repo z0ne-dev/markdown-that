@@ -1,10 +1,10 @@
 // run it like this:
 // cargo test --test pathological --jobs 1 -- --nocapture --test-threads=1
 use markdown_that::MarkdownThat;
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 use std::time::SystemTime;
 
-static MD : Lazy<MarkdownThat> = Lazy::new(|| {
+static MD: LazyLock<MarkdownThat> = LazyLock::new(|| {
     let mut parser = markdown_that::MarkdownThat::new();
     markdown_that::plugins::cmark::add(&mut parser);
     markdown_that::plugins::html::add(&mut parser);
@@ -18,20 +18,29 @@ fn run(src: &str) {
     dbg!(now.elapsed().ok().unwrap());
 }
 
-
 mod commonmark {
     // Ported from cmark, https://github.com/commonmark/cmark/blob/master/test/pathological_tests.py
     use super::run;
 
     #[test]
     fn nested_inlines() {
-        run(&format!("{}{}{}", "*".repeat(100000), "a", "*".repeat(100000)));
+        run(&format!(
+            "{}{}{}",
+            "*".repeat(100000),
+            "a",
+            "*".repeat(100000)
+        ));
     }
 
     #[test]
     fn nested_strong_emph() {
         // suspiciously slow
-        run(&format!("{}{}{}", "*a **a".repeat(5000), "b", " a** a*".repeat(5000)));
+        run(&format!(
+            "{}{}{}",
+            "*a **a".repeat(5000),
+            "b",
+            " a** a*".repeat(5000)
+        ));
     }
 
     #[test]
@@ -82,7 +91,12 @@ mod commonmark {
 
     #[test]
     fn nested_brackets() {
-        run(&format!("{}{}{}", "[".repeat(50000), "a", "]".repeat(50000)));
+        run(&format!(
+            "{}{}{}",
+            "[".repeat(50000),
+            "a",
+            "]".repeat(50000)
+        ));
     }
 
     #[test]
@@ -92,13 +106,19 @@ mod commonmark {
 
     #[test]
     fn deeply_nested_lists() {
-        let src = (0..5000).map(|x| format!("{}{}", "  ".repeat(x), "* a\n")).collect::<Vec<_>>().join("");
+        let src = (0..5000)
+            .map(|x| format!("{}{}", "  ".repeat(x), "* a\n"))
+            .collect::<Vec<_>>()
+            .join("");
         run(&src);
     }
 
     #[test]
     fn backticks() {
-        let src = (0..1000).map(|x| format!("{}{}", "e", "`".repeat(x))).collect::<Vec<_>>().join("");
+        let src = (0..1000)
+            .map(|x| format!("{}{}", "e", "`".repeat(x)))
+            .collect::<Vec<_>>()
+            .join("");
         run(&src);
     }
 
@@ -137,4 +157,3 @@ mod markdownit {
         run(&format!("{}{}{}", "x", " ".repeat(100000), "x  \nx"));
     }
 }
-

@@ -3,8 +3,9 @@
 //! `&#123;`, `&#xAF;`, `&quot;`
 //!
 //! <https://spec.commonmark.org/0.30/#entity-and-numeric-character-references>
-use once_cell::sync::Lazy;
+
 use regex::Regex;
+use std::sync::LazyLock;
 
 use crate::common::utils::{get_entity_from_str, is_valid_entity_code};
 use crate::parser::inline::{InlineRule, InlineState, TextSpecial};
@@ -14,13 +15,11 @@ pub fn add(md: &mut MarkdownThat) {
     md.inline.add_rule::<EntityScanner>();
 }
 
-static DIGITAL_RE : Lazy<Regex> = Lazy::new(|| {
-    Regex::new("(?i)^&#((?:x[a-f0-9]{1,6}|[0-9]{1,7}));").unwrap()
-});
+static DIGITAL_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("(?i)^&#((?:x[a-f0-9]{1,6}|[0-9]{1,7}));").unwrap());
 
-static NAMED_RE : Lazy<Regex> = Lazy::new(|| {
-    Regex::new("(?i)^&([a-z][a-z0-9]{1,31});").unwrap()
-});
+static NAMED_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("(?i)^&([a-z][a-z0-9]{1,31});").unwrap());
 
 #[doc(hidden)]
 pub struct EntityScanner;
@@ -74,7 +73,9 @@ impl InlineRule for EntityScanner {
 
     fn run(state: &mut InlineState) -> Option<(Node, usize)> {
         let mut chars = state.src[state.pos..state.pos_max].chars();
-        if chars.next().unwrap() != '&' { return None; }
+        if chars.next().unwrap() != '&' {
+            return None;
+        }
 
         if let Some('#') = chars.next() {
             Self::parse_digital_entity(state)
