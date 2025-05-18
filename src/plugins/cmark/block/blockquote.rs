@@ -5,7 +5,7 @@
 //! <https://spec.commonmark.org/0.30/#block-quotes>
 use crate::common::utils::find_indent_of;
 use crate::parser::block::{BlockRule, BlockState};
-use crate::{MarkdownIt, Node, NodeValue, Renderer};
+use crate::{MarkdownThat, Node, NodeValue, Renderer};
 
 #[derive(Debug)]
 pub struct Blockquote;
@@ -22,7 +22,7 @@ impl NodeValue for Blockquote {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.block.add_rule::<BlockquoteScanner>();
 }
 

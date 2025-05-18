@@ -4,7 +4,7 @@ use crate::common::sourcemap::SourcePos;
 use crate::common::utils::is_punct_char;
 use crate::parser::extset::{InlineRootExtSet, RootExtSet};
 use crate::parser::inline::Text;
-use crate::{MarkdownIt, Node};
+use crate::{MarkdownThat, Node};
 
 #[derive(Debug, Clone, Copy)]
 /// Information about emphasis delimiter run returned from [InlineState::scan_delims].
@@ -25,20 +25,23 @@ pub struct DelimiterRun {
 #[derive(Debug)]
 #[readonly::make]
 /// Sandbox object containing data required to parse inline structures.
-pub struct InlineState<'a, 'b> where 'b: 'a {
+pub struct InlineState<'a, 'b>
+where
+    'b: 'a,
+{
     /// Markdown source.
     #[readonly]
     pub src: String,
 
     /// Link to parser instance.
     #[readonly]
-    pub md: &'a MarkdownIt,
+    pub md: &'a MarkdownThat,
 
     /// Current node, your rule is supposed to add children to it.
     pub node: Node,
 
-    /// For each line, it holds offset of the start of the line in original
-    /// markdown source and offset of the start of the line in `src`.
+    /// For each line, it holds an offset of the start of the line in an original
+    /// Markdown source and offset of the start of the line in `src`.
     pub srcmap: Vec<(usize, usize)>,
     pub root_ext: &'b mut RootExtSet,
     pub inline_ext: &'b mut InlineRootExtSet,
@@ -50,7 +53,7 @@ pub struct InlineState<'a, 'b> where 'b: 'a {
     pub pos_max: usize,
 
     /// Counter used to disable inline linkifier execution
-    /// inside raw html and markdown links.
+    /// inside raw HTML and Markdown links.
     pub link_level: i32,
 
     /// Counter used to prevent recursion by image and link rules.
@@ -61,14 +64,14 @@ impl<'a, 'b> InlineState<'a, 'b> {
     pub fn new(
         src: String,
         srcmap: Vec<(usize, usize)>,
-        md: &'a MarkdownIt,
+        md: &'a MarkdownThat,
         root_ext: &'b mut RootExtSet,
         inline_ext: &'b mut InlineRootExtSet,
         node: Node,
     ) -> Self {
         let mut result = Self {
-            pos:        0,
-            pos_max:    src.len(),
+            pos: 0,
+            pos_max: src.len(),
             src,
             srcmap,
             root_ext,
@@ -76,7 +79,7 @@ impl<'a, 'b> InlineState<'a, 'b> {
             md,
             node,
             link_level: 0,
-            level:      0,
+            level: 0,
         };
 
         result.trim_src();
@@ -94,24 +97,33 @@ impl<'a, 'b> InlineState<'a, 'b> {
     }
 
     pub fn trailing_text_push(&mut self, start: usize, end: usize) {
-        if let Some(text) = self.node.children.last_mut()
-                                       .and_then(|t| t.cast_mut::<Text>()) {
+        if let Some(text) = self
+            .node
+            .children
+            .last_mut()
+            .and_then(|t| t.cast_mut::<Text>())
+        {
             text.content.push_str(&self.src[start..end]);
 
             if let Some(map) = self.node.children.last_mut().unwrap().srcmap {
                 let (map_start, _) = map.get_byte_offsets();
                 let map_end = self.get_source_pos_for(end);
-                self.node.children.last_mut().unwrap().srcmap = Some(SourcePos::new(map_start, map_end));
+                self.node.children.last_mut().unwrap().srcmap =
+                    Some(SourcePos::new(map_start, map_end));
             }
         } else {
-            let mut node = Node::new(Text { content: self.src[start..end].to_owned() });
+            let mut node = Node::new(Text {
+                content: self.src[start..end].to_owned(),
+            });
             node.srcmap = self.get_map(start, end);
             self.node.children.push(node);
         }
     }
 
     pub fn trailing_text_pop(&mut self, count: usize) {
-        if count == 0 { return; }
+        if count == 0 {
+            return;
+        }
 
         let mut node = self.node.children.pop().unwrap();
         let text = node.cast_mut::<Text>().unwrap();
@@ -132,18 +144,17 @@ impl<'a, 'b> InlineState<'a, 'b> {
 
     #[must_use]
     pub fn trailing_text_get(&self) -> &str {
-        if let Some(text) = self.node.children.last()
-                                .and_then(|t| t.cast::<Text>()) {
+        if let Some(text) = self.node.children.last().and_then(|t| t.cast::<Text>()) {
             text.content.as_str()
         } else {
             ""
         }
     }
 
-    /// Scan a sequence of emphasis-like markers, and determine whether
+    /// Scan a sequence of emphasis-like markers and determine whether
     /// it can start an emphasis sequence or end an emphasis sequence.
     ///
-    ///  - start - position to scan from (it should point at a valid marker);
+    ///  - Start - position to scan from (it should point at a valid marker);
     ///  - can_split_word - determine if these markers can be found inside a word
     ///
     #[must_use]
@@ -154,7 +165,7 @@ impl<'a, 'b> InlineState<'a, 'b> {
         let last_char = if start > 0 {
             self.src[..start].chars().next_back().unwrap()
         } else {
-            // treat beginning of the line as a whitespace
+            // treat the beginning of the line as whitespace
             ' '
         };
 
@@ -171,7 +182,7 @@ impl<'a, 'b> InlineState<'a, 'b> {
                 }
                 Some(x) => {
                     if x != marker {
-                        // treat end of the line as a whitespace
+                        // treat the end of the line as whitespace
                         next_char = x;
                         break;
                     }
@@ -208,10 +219,10 @@ impl<'a, 'b> InlineState<'a, 'b> {
         let can_close;
 
         if !can_split_word {
-            can_open  = left_flanking  && (!right_flanking || is_last_punct_char);
-            can_close = right_flanking && (!left_flanking  || is_next_punct_char);
+            can_open = left_flanking && (!right_flanking || is_last_punct_char);
+            can_close = right_flanking && (!left_flanking || is_next_punct_char);
         } else {
-            can_open  = left_flanking;
+            can_open = left_flanking;
             can_close = right_flanking;
         }
 
@@ -219,16 +230,16 @@ impl<'a, 'b> InlineState<'a, 'b> {
             marker,
             can_open,
             can_close,
-            length: count
+            length: count,
         }
     }
 
     #[must_use]
     fn get_source_pos_for(&self, pos: usize) -> usize {
-        let line = match self.srcmap.binary_search_by(|x| x.0.cmp(&pos)) {
-            Ok(x) => x,
-            Err(x) => x - 1,
-        };
+        let line = self
+            .srcmap
+            .binary_search_by(|x| x.0.cmp(&pos))
+            .unwrap_or_else(|x| x - 1);
         self.srcmap[line].1 + (pos - self.srcmap[line].0)
     }
 
@@ -238,7 +249,7 @@ impl<'a, 'b> InlineState<'a, 'b> {
 
         Some(SourcePos::new(
             self.get_source_pos_for(start_pos),
-            self.get_source_pos_for(end_pos)
+            self.get_source_pos_for(end_pos),
         ))
     }
 }

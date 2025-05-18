@@ -1,4 +1,4 @@
-use markdown_it::parser::inline::{Text, TextSpecial};
+use markdown_that::parser::inline::{Text, TextSpecial};
 use std::io::{Read, Write};
 
 #[cfg(not(tarpaulin_include))]
@@ -58,26 +58,26 @@ fn main() {
     };
 
     let source = String::from_utf8_lossy(&vec);
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(md);
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(md);
     #[cfg(feature = "syntect")]
-    markdown_it::plugins::extra::syntect::add(md);
-    markdown_it::plugins::extra::tables::add(md);
-    markdown_it::plugins::extra::strikethrough::add(md);
-    markdown_it::plugins::extra::beautify_links::add(md);
+    markdown_that::plugins::extra::syntect::add(md);
+    markdown_that::plugins::extra::tables::add(md);
+    markdown_that::plugins::extra::strikethrough::add(md);
+    markdown_that::plugins::extra::beautify_links::add(md);
     if !no_html {
-        markdown_it::plugins::html::add(md);
+        markdown_that::plugins::html::add(md);
     }
     if sourcepos {
-        markdown_it::plugins::sourcepos::add(md);
+        markdown_that::plugins::sourcepos::add(md);
     }
     #[cfg(feature = "linkify")]
     if linkify {
-        markdown_it::plugins::extra::linkify::add(md);
+        markdown_that::plugins::extra::linkify::add(md);
     }
     if typographer {
-        markdown_it::plugins::extra::smartquotes::add(md);
-        markdown_it::plugins::extra::typographer::add(md);
+        markdown_that::plugins::extra::smartquotes::add(md);
+        markdown_that::plugins::extra::typographer::add(md);
     }
 
     let ast = md.parse(&source);

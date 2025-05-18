@@ -9,9 +9,9 @@
 //!  - or took some care to sanitize html yourself
 //!
 //! ```rust
-//! let md = &mut markdown_it::MarkdownIt::new();
-//! markdown_it::plugins::cmark::add(md);
-//! markdown_it::plugins::html::add(md);
+//! let md = &mut markdown_that::MarkdownThat::new();
+//! markdown_that::plugins::cmark::add(md);
+//! markdown_that::plugins::html::add(md);
 //!
 //! let html = md.parse("hello<br>world").render();
 //! assert_eq!(html.trim(), r#"<p>hello<br>world</p>"#);
@@ -21,9 +21,9 @@ pub mod html_block;
 pub mod html_inline;
 mod utils;
 
-use crate::MarkdownIt;
+use crate::MarkdownThat;
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     html_inline::add(md);
     html_block::add(md);
 }

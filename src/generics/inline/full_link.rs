@@ -1,13 +1,13 @@
-//! Structure similar to `[link](<to> "stuff")` with configurable prefix.
+//! Structure similar to `[link](<to> "stuff")` with a configurable prefix.
 //!
 //! There are two structures in CommonMark that match this syntax:
 //!  - links - `[text](<href> "title")`
 //!  - images - `![alt](<src> "title")`
 //!
 //! You can add custom rules like `~[foo](<bar> "baz")`. Let us know if
-//! you come up with fun use case to add as an example!
+//! you come up with a fun use case to add as an example!
 //!
-//! Add a custom structure by using [add_prefix] function, which takes following arguments:
+//! Add a custom structure by using [add_prefix] function, which takes the following arguments:
 //!  - `PREFIX` - marker character before label (`!` in case of images)
 //!  - `ENABLE_NESTED` - allow nested links inside
 //!  - `md` - parser instance
@@ -16,19 +16,19 @@
 use std::collections::HashMap;
 
 use crate::common::utils::unescape_all;
-use crate::parser::extset::{InlineRootExt, MarkdownItExt};
+use crate::parser::extset::{InlineRootExt, MarkdownThatExt};
 use crate::parser::inline::{InlineRule, InlineState};
 use crate::plugins::cmark::block::reference::ReferenceMap;
-use crate::{MarkdownIt, Node};
+use crate::{MarkdownThat, Node};
 
 #[derive(Debug)]
-struct LinkCfg<const PREFIX: char>(fn (Option<String>, Option<String>) -> Node);
-impl<const PREFIX: char> MarkdownItExt for LinkCfg<PREFIX> {}
+struct LinkCfg<const PREFIX: char>(fn(Option<String>, Option<String>) -> Node);
+impl<const PREFIX: char> MarkdownThatExt for LinkCfg<PREFIX> {}
 
 /// adds custom rule with no prefix
 pub fn add<const ENABLE_NESTED: bool>(
-    md: &mut MarkdownIt,
-    f: fn (url: Option<String>, title: Option<String>) -> Node
+    md: &mut MarkdownThat,
+    f: fn(url: Option<String>, title: Option<String>) -> Node,
 ) {
     md.ext.insert(LinkCfg::<'\0'>(f));
     md.inline.add_rule::<LinkScanner<ENABLE_NESTED>>();
@@ -37,13 +37,14 @@ pub fn add<const ENABLE_NESTED: bool>(
     }
 }
 
-/// adds custom rule with given `PREFIX` character
+/// adds custom rule with the given ` PREFIX ` character
 pub fn add_prefix<const PREFIX: char, const ENABLE_NESTED: bool>(
-    md: &mut MarkdownIt,
-    f: fn (url: Option<String>, title: Option<String>) -> Node
+    md: &mut MarkdownThat,
+    f: fn(url: Option<String>, title: Option<String>) -> Node,
 ) {
     md.ext.insert(LinkCfg::<PREFIX>(f));
-    md.inline.add_rule::<LinkPrefixScanner<PREFIX, ENABLE_NESTED>>();
+    md.inline
+        .add_rule::<LinkPrefixScanner<PREFIX, ENABLE_NESTED>>();
     if !md.inline.has_rule::<LinkScannerEnd>() {
         md.inline.add_rule::<LinkScannerEnd>();
     }
@@ -56,13 +57,17 @@ impl<const ENABLE_NESTED: bool> InlineRule for LinkScanner<ENABLE_NESTED> {
 
     fn check(state: &mut InlineState) -> Option<usize> {
         let mut chars = state.src[state.pos..state.pos_max].chars();
-        if chars.next().unwrap() != '[' { return None; }
+        if chars.next().unwrap() != '[' {
+            return None;
+        }
         rule_check(state, ENABLE_NESTED, 0)
     }
 
     fn run(state: &mut InlineState) -> Option<(Node, usize)> {
         let mut chars = state.src[state.pos..state.pos_max].chars();
-        if chars.next().unwrap() != '[' { return None; }
+        if chars.next().unwrap() != '[' {
+            return None;
+        }
         let f = state.md.ext.get::<LinkCfg<'\0'>>().unwrap().0;
         rule_run(state, ENABLE_NESTED, 0, f)
     }
@@ -70,34 +75,48 @@ impl<const ENABLE_NESTED: bool> InlineRule for LinkScanner<ENABLE_NESTED> {
 
 #[doc(hidden)]
 pub struct LinkPrefixScanner<const PREFIX: char, const ENABLE_NESTED: bool>;
-impl<const PREFIX: char, const ENABLE_NESTED: bool> InlineRule for LinkPrefixScanner<PREFIX, ENABLE_NESTED> {
+impl<const PREFIX: char, const ENABLE_NESTED: bool> InlineRule
+    for LinkPrefixScanner<PREFIX, ENABLE_NESTED>
+{
     const MARKER: char = PREFIX;
 
     fn check(state: &mut InlineState) -> Option<usize> {
         let mut chars = state.src[state.pos..state.pos_max].chars();
-        if chars.next() != Some(PREFIX) { return None; }
-        if chars.next() != Some('[') { return None; }
+        if chars.next() != Some(PREFIX) {
+            return None;
+        }
+        if chars.next() != Some('[') {
+            return None;
+        }
         rule_check(state, ENABLE_NESTED, 1)
     }
 
     fn run(state: &mut InlineState) -> Option<(Node, usize)> {
         let mut chars = state.src[state.pos..state.pos_max].chars();
-        if chars.next() != Some(PREFIX) { return None; }
-        if chars.next() != Some('[') { return None; }
+        if chars.next() != Some(PREFIX) {
+            return None;
+        }
+        if chars.next() != Some('[') {
+            return None;
+        }
         let f = state.md.ext.get::<LinkCfg<PREFIX>>().unwrap().0;
         rule_run(state, ENABLE_NESTED, 1, f)
     }
 }
 
 #[doc(hidden)]
-/// this rule makes sure that parser is stopped on "]" character,
+/// this rule makes sure that the parser is stopped on "]" character,
 /// but it actually doesn't do anything
 pub struct LinkScannerEnd;
 impl InlineRule for LinkScannerEnd {
     const MARKER: char = ']';
 
-    fn check(_: &mut InlineState) -> Option<usize> { None }
-    fn run(_: &mut InlineState) -> Option<(Node, usize)> { None }
+    fn check(_: &mut InlineState) -> Option<usize> {
+        None
+    }
+    fn run(_: &mut InlineState) -> Option<(Node, usize)> {
+        None
+    }
 }
 
 fn rule_check(state: &mut InlineState, enable_nested: bool, offset: usize) -> Option<usize> {
@@ -112,7 +131,7 @@ fn rule_run(
     state: &mut InlineState,
     enable_nested: bool,
     offset: usize,
-    f: fn (Option<String>, Option<String>) -> Node
+    f: fn(Option<String>, Option<String>) -> Node,
 ) -> Option<(Node, usize)> {
     let start = state.pos;
     let result = parse_link(state, state.pos + offset, enable_nested)?;
@@ -140,13 +159,14 @@ fn rule_run(
 struct LinkLabelScanCache(HashMap<(usize, bool), Option<usize>>);
 impl InlineRootExt for LinkLabelScanCache {}
 
-
 // Parse link label
 //
-// this function assumes that first character ("[") already matches;
+// this function assumes that the first character ("[") already matches;
 // returns the end of the label
 fn parse_link_label(state: &mut InlineState, start: usize, enable_nested: bool) -> Option<usize> {
-    let cache = state.inline_ext.get_or_insert_default::<LinkLabelScanCache>();
+    let cache = state
+        .inline_ext
+        .get_or_insert_default::<LinkLabelScanCache>();
     if let Some(&cached) = cache.0.get(&(start, enable_nested)) {
         return cached;
     }
@@ -171,10 +191,12 @@ fn parse_link_label(state: &mut InlineState, start: usize, enable_nested: bool) 
         state.md.inline.skip_token(state);
         if ch == '[' {
             if prev_pos == state.pos - 1 {
-                // increase level if we find text `[`, which is not a part of any token
+                // increase the level if we find text `[`, which is not a part of any token
                 level += 1;
 
-                let cache = state.inline_ext.get_or_insert_default::<LinkLabelScanCache>();
+                let cache = state
+                    .inline_ext
+                    .get_or_insert_default::<LinkLabelScanCache>();
                 if let Some(&cached) = cache.0.get(&(prev_pos, enable_nested)) {
                     // maybe cache appeared as a result of skip_token
                     if let Some(cached_pos) = cached {
@@ -183,7 +205,6 @@ fn parse_link_label(state: &mut InlineState, start: usize, enable_nested: bool) 
                         break;
                     }
                 }
-
             } else if !enable_nested {
                 break;
             }
@@ -197,25 +218,29 @@ fn parse_link_label(state: &mut InlineState, start: usize, enable_nested: bool) 
     // restore old state
     state.pos = old_pos;
 
-    let cache = state.inline_ext.get_or_insert_default::<LinkLabelScanCache>();
+    let cache = state
+        .inline_ext
+        .get_or_insert_default::<LinkLabelScanCache>();
     cache.0.insert((start, enable_nested), label_end);
 
     label_end
 }
 
-
 pub struct ParseLinkFragmentResult {
     /// end position
-    pub pos:   usize,
+    pub pos: usize,
     /// number of linebreaks inside
     pub lines: usize,
     /// parsed result
-    pub str:   String,
+    pub str: String,
 }
 
-
 /// Helper function used to parse `<href>` part of the links with optional brackets.
-pub fn parse_link_destination(str: &str, start: usize, max: usize) -> Option<ParseLinkFragmentResult> {
+pub fn parse_link_destination(
+    str: &str,
+    start: usize,
+    max: usize,
+) -> Option<ParseLinkFragmentResult> {
     let mut chars = str[start..max].chars().peekable();
     let mut pos = start;
 
@@ -232,36 +257,36 @@ pub fn parse_link_destination(str: &str, start: usize, max: usize) -> Option<Par
                         str: unescape_all(&str[start + 1..pos]).into_owned(),
                     });
                 }
-                Some('\\') => {
-                    match chars.next() {
-                        None => return None,
-                        Some(x) => pos += 1 + x.len_utf8(),
-                    }
-                }
+                Some('\\') => match chars.next() {
+                    None => return None,
+                    Some(x) => pos += 1 + x.len_utf8(),
+                },
                 Some(x) => {
                     pos += x.len_utf8();
                 }
             }
         }
     } else {
-        let mut level : u32 = 0;
+        let mut level: u32 = 0;
         loop {
             match chars.next() {
-                // space + ascii control characters
+                // space and ascii control characters
                 Some('\0'..=' ' | '\x7f') | None => break,
-                Some('\\') => {
-                    match chars.next() {
-                        Some(' ') | None => break,
-                        Some(x) => pos += 1 + x.len_utf8(),
-                    }
-                }
+                Some('\\') => match chars.next() {
+                    Some(' ') | None => break,
+                    Some(x) => pos += 1 + x.len_utf8(),
+                },
                 Some('(') => {
                     level += 1;
-                    if level > 32 { return None; }
+                    if level > 32 {
+                        return None;
+                    }
                     pos += 1;
                 }
                 Some(')') => {
-                    if level == 0 { break; }
+                    if level == 0 {
+                        break;
+                    }
                     level -= 1;
                     pos += 1;
                 }
@@ -271,7 +296,9 @@ pub fn parse_link_destination(str: &str, start: usize, max: usize) -> Option<Par
             }
         }
 
-        if level != 0 { return None; }
+        if level != 0 {
+            return None;
+        }
 
         Some(ParseLinkFragmentResult {
             pos,
@@ -281,7 +308,6 @@ pub fn parse_link_destination(str: &str, start: usize, max: usize) -> Option<Par
     }
 }
 
-
 /// Helper function used to parse `"title"` part of the links (with `'title'` or `(title)` alternative syntax).
 pub fn parse_link_title(str: &str, start: usize, max: usize) -> Option<ParseLinkFragmentResult> {
     let mut chars = str[start..max].chars();
@@ -289,9 +315,9 @@ pub fn parse_link_title(str: &str, start: usize, max: usize) -> Option<ParseLink
     let mut lines = 0;
 
     let marker = match chars.next() {
-        Some('"')  => '"',
+        Some('"') => '"',
         Some('\'') => '\'',
-        Some('(')  => ')',
+        Some('(') => ')',
         None | Some(_) => return None,
     };
 
@@ -311,12 +337,10 @@ pub fn parse_link_title(str: &str, start: usize, max: usize) -> Option<ParseLink
                 pos += 1;
                 lines += 1;
             }
-            Some('\\') => {
-                match chars.next() {
-                    None => return None,
-                    Some(x) => pos += 1 + x.len_utf8(),
-                }
-            }
+            Some('\\') => match chars.next() {
+                None => return None,
+                Some(x) => pos += 1 + x.len_utf8(),
+            },
             Some(x) => {
                 pos += x.len_utf8();
             }
@@ -337,7 +361,7 @@ struct ParseLinkResult {
 
 // Parses [link](<to> "stuff")
 //
-// this function assumes that first character ("[") already matches
+// this function assumes that the first character ("[") already matches
 //
 fn parse_link(state: &mut InlineState, pos: usize, enable_nested: bool) -> Option<ParseLinkResult> {
     let label_end = parse_link_label(state, pos, enable_nested)?;
@@ -363,7 +387,12 @@ fn parse_link(state: &mut InlineState, pos: usize, enable_nested: bool) -> Optio
         //          ^^^^^^ parsing link destination
         if let Some(res) = parse_link_destination(&state.src, pos, state.pos_max) {
             let href_candidate = state.md.link_formatter.normalize_link(&res.str);
-            if state.md.link_formatter.validate_link(&href_candidate).is_some() {
+            if state
+                .md
+                .link_formatter
+                .validate_link(&href_candidate)
+                .is_some()
+            {
                 pos = res.pos;
                 href = Some(href_candidate);
             }
@@ -395,7 +424,7 @@ fn parse_link(state: &mut InlineState, pos: usize, enable_nested: bool) -> Optio
                 href,
                 title,
                 end: pos + 1,
-            })
+            });
         }
     }
 

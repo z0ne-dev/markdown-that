@@ -1,7 +1,7 @@
 // Replaces `(\/)-------(\/)` with a nice picture.
 
-use markdown_it::parser::block::{BlockRule, BlockState};
-use markdown_it::{MarkdownIt, Node, NodeValue, Renderer};
+use markdown_that::parser::block::{BlockRule, BlockState};
+use markdown_that::{MarkdownThat, Node, NodeValue, Renderer};
 
 const CRAB_CLAW : &str = r#"(\/)"#;
 const CRAB_URL  : &str = "https://upload.wikimedia.org/wikipedia/commons/0/0f/Original_Ferris.svg";
@@ -66,7 +66,7 @@ impl BlockRule for FerrisBlockScanner {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     // insert this rule into block subparser
     md.block.add_rule::<FerrisBlockScanner>();
 }

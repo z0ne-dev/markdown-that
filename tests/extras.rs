@@ -3,8 +3,8 @@ use once_cell::sync::Lazy;
 
 #[test]
 fn title_example() {
-    let parser = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(parser);
+    let parser = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(parser);
 
     let ast = parser.parse("Hello **world**!");
     let html = ast.render();
@@ -14,9 +14,9 @@ fn title_example() {
 
 #[test]
 fn lazy_singleton() {
-    static MD : Lazy<markdown_it::MarkdownIt> = Lazy::new(|| {
-        let mut parser = markdown_it::MarkdownIt::new();
-        markdown_it::plugins::cmark::add(&mut parser);
+    static MD : Lazy<markdown_that::MarkdownThat> = Lazy::new(|| {
+        let mut parser = markdown_that::MarkdownThat::new();
+        markdown_that::plugins::cmark::add(&mut parser);
         parser
     });
 
@@ -28,7 +28,7 @@ fn lazy_singleton() {
 
 #[test]
 fn no_plugins() {
-    let md = &mut markdown_it::MarkdownIt::new();
+    let md = &mut markdown_that::MarkdownThat::new();
     let node = md.parse("hello\nworld");
     let result = node.render();
     assert_eq!(result, "hello\nworld\n");
@@ -36,9 +36,9 @@ fn no_plugins() {
 
 #[test]
 fn no_max_indent() {
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::block::paragraph::add(md);
-    markdown_it::plugins::cmark::block::list::add(md);
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::block::paragraph::add(md);
+    markdown_that::plugins::cmark::block::list::add(md);
     md.max_indent = i32::MAX;
     let node = md.parse("        paragraph\n      - item");
     let result = node.render();
@@ -48,9 +48,9 @@ fn no_max_indent() {
 
 /*#[test]
 fn no_block_parser() {
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(md);
-    md.remove_rule::<markdown_it::parser::block::builtin::BlockParserRule>();
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(md);
+    md.remove_rule::<markdown_that::parser::block::builtin::BlockParserRule>();
     let node = md.parse("hello *world*");
     let result = node.render();
     assert_eq!(result, "hello <em>world</em>");
@@ -58,17 +58,17 @@ fn no_block_parser() {
 
 fn run(input: &str, output: &str) {
     let output = if output.is_empty() { "".to_owned() } else { output.to_owned() + "\n" };
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(md);
-    markdown_it::plugins::html::add(md);
-    markdown_it::plugins::extra::beautify_links::add(md);
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(md);
+    markdown_that::plugins::html::add(md);
+    markdown_that::plugins::extra::beautify_links::add(md);
     let node = md.parse(&(input.to_owned() + "\n"));
     node.walk(|node, _| assert!(node.srcmap.is_some()));
     let result = node.render();
     assert_eq!(result, output);
 }
 
-mod markdown_it_rs_extras {
+mod markdown_that_rs_extras {
     use super::run;
 
     #[test]
@@ -129,11 +129,11 @@ r#"<blockquote>
 
     #[test]
     fn test_node_ext_propagation() {
-        use markdown_it::parser::block::{BlockRule, BlockState};
-        use markdown_it::parser::core::CoreRule;
-        use markdown_it::parser::extset::NodeExt;
-        use markdown_it::parser::inline::{InlineRule, InlineState};
-        use markdown_it::{MarkdownIt, Node};
+        use markdown_that::parser::block::{BlockRule, BlockState};
+        use markdown_that::parser::core::CoreRule;
+        use markdown_that::parser::extset::NodeExt;
+        use markdown_that::parser::inline::{InlineRule, InlineState};
+        use markdown_that::{MarkdownThat, Node};
 
         #[derive(Debug, Default)]
         struct NodeErrors(Vec<&'static str>);
@@ -161,14 +161,14 @@ r#"<blockquote>
 
         struct MyCoreRule;
         impl CoreRule for MyCoreRule {
-            fn run(root: &mut Node, _md: &MarkdownIt) {
+            fn run(root: &mut Node, _md: &MarkdownThat) {
                 let err = root.ext.get_or_insert_default::<NodeErrors>();
                 err.0.push("core");
             }
         }
 
-        let md = &mut markdown_it::MarkdownIt::new();
-        markdown_it::plugins::cmark::add(md);
+        let md = &mut markdown_that::MarkdownThat::new();
+        markdown_that::plugins::cmark::add(md);
 
         md.inline.add_rule::<MyInlineRule>();
         md.block.add_rule::<MyBlockRule>();

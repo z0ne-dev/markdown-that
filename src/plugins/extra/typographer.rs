@@ -5,10 +5,10 @@
 //! `plugins::extra::add`. You will have to enable it separately:
 //!
 //! ```rust
-//! let md = &mut markdown_it::MarkdownIt::new();
-//! markdown_it::plugins::cmark::add(md);
-//! markdown_it::plugins::extra::add(md);
-//! markdown_it::plugins::extra::typographer::add(md);
+//! let md = &mut markdown_that::MarkdownThat::new();
+//! markdown_that::plugins::cmark::add(md);
+//! markdown_that::plugins::extra::add(md);
+//! markdown_that::plugins::extra::typographer::add(md);
 //!
 //! let html = md.parse("Hello world!.... This is the Right Way(TM) to markdown!!!!!").render();
 //! assert_eq!(html.trim(), r#"<p>Hello world!.. This is the Right Way™ to markdown!!!</p>"#);
@@ -36,7 +36,7 @@ use std::borrow::Cow;
 
 use crate::parser::core::CoreRule;
 use crate::parser::inline::Text;
-use crate::{MarkdownIt, Node};
+use crate::{MarkdownThat, Node};
 
 static REPLACEMENTS: Lazy<Box<[(Regex, &'static str)]>> = Lazy::new(|| {
     Box::new([
@@ -73,14 +73,14 @@ fn replace_abbreviation(input: &str) -> &'static str {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.add_rule::<TypographerRule>();
 }
 
 pub struct TypographerRule;
 
 impl CoreRule for TypographerRule {
-    fn run(root: &mut Node, _: &MarkdownIt) {
+    fn run(root: &mut Node, _: &MarkdownThat) {
         root.walk_mut(|node, _| {
             let Some(text_node) = node.cast_mut::<Text>() else { return; };
 

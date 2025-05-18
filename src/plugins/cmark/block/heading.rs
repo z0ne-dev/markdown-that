@@ -5,7 +5,7 @@
 //! <https://spec.commonmark.org/0.30/#atx-heading>
 use crate::parser::block::{BlockRule, BlockState};
 use crate::parser::inline::InlineRoot;
-use crate::{MarkdownIt, Node, NodeValue, Renderer};
+use crate::{MarkdownThat, Node, NodeValue, Renderer};
 
 #[derive(Debug)]
 pub struct ATXHeading {
@@ -25,7 +25,7 @@ impl NodeValue for ATXHeading {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.block.add_rule::<HeadingScanner>();
 }
 

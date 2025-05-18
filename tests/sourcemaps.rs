@@ -1,10 +1,10 @@
-use markdown_it::Node;
-use markdown_it::common::sourcemap::SourceWithLineStarts;
+use markdown_that::Node;
+use markdown_that::common::sourcemap::SourceWithLineStarts;
 
 fn run(input: &str, f: fn (&Node, SourceWithLineStarts)) {
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(md);
-    markdown_it::plugins::html::add(md);
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(md);
+    markdown_that::plugins::html::add(md);
     let node = md.parse(input);
     node.walk(|node, _| assert!(node.srcmap.is_some()));
     f(&node, SourceWithLineStarts::new(input));

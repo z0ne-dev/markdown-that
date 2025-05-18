@@ -1,21 +1,18 @@
-use derivative::Derivative;
-
+use crate::Node;
+use crate::common::TypeKey;
 use crate::common::ruler::Ruler;
 use crate::common::sourcemap::SourcePos;
-use crate::common::TypeKey;
 use crate::parser::block::{self, BlockParser};
 use crate::parser::core::{Root, *};
-use crate::parser::extset::MarkdownItExtSet;
+use crate::parser::extset::MarkdownThatExtSet;
 use crate::parser::inline::{self, InlineParser};
 use crate::parser::linkfmt::{LinkFormatter, MDLinkFormatter};
-use crate::Node;
 
-type RuleFn = fn (&mut Node, &MarkdownIt);
+type RuleFn = fn(&mut Node, &MarkdownThat);
 
-#[derive(Derivative)]
-#[derivative(Debug)]
+#[derive(Debug)]
 /// Main parser struct, created once and reused for parsing multiple documents.
-pub struct MarkdownIt {
+pub struct MarkdownThat {
     /// Block-level tokenizer.
     pub block: BlockParser,
 
@@ -26,7 +23,7 @@ pub struct MarkdownIt {
     pub link_formatter: Box<dyn LinkFormatter>,
 
     /// Storage for custom data used in plugins.
-    pub ext: MarkdownItExtSet,
+    pub ext: MarkdownThatExtSet,
 
     /// Maximum depth of the generated AST, exists to prevent recursion
     /// (if markdown source reaches this depth, deeply nested structures
@@ -42,7 +39,7 @@ pub struct MarkdownIt {
     ruler: Ruler<TypeKey, RuleFn>,
 }
 
-impl MarkdownIt {
+impl MarkdownThat {
     pub fn new() -> Self {
         Self::default()
     }
@@ -53,7 +50,10 @@ impl MarkdownIt {
 
         for rule in self.ruler.iter() {
             rule(&mut node, self);
-            debug_assert!(node.is::<Root>(), "root node of the AST must always be Root");
+            debug_assert!(
+                node.is::<Root>(),
+                "root node of the AST must always be Root"
+            );
         }
         node
     }
@@ -72,19 +72,21 @@ impl MarkdownIt {
     }
 }
 
-impl Default for MarkdownIt {
+impl Default for MarkdownThat {
     fn default() -> Self {
         let mut md = Self {
             block: BlockParser::new(),
             inline: InlineParser::new(),
             link_formatter: Box::new(MDLinkFormatter::new()),
-            ext: MarkdownItExtSet::new(),
+            ext: MarkdownThatExtSet::new(),
             max_nesting: 100,
             ruler: Ruler::new(),
             max_indent: i32::MAX,
         };
+
         block::builtin::add(&mut md);
         inline::builtin::add(&mut md);
+
         md
     }
 }

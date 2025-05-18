@@ -13,17 +13,17 @@ use std::slice::Iter;
 ///
 /// You can use it like this:
 /// ```
-/// use markdown_it::common::ruler::Ruler;
+/// use markdown_that::common::ruler::Ruler;
 ///
 /// // this example prints "[ hello, world! ]",
-/// // where each token is printed by separate closure
+/// // where each token is printed by a separate closure
 /// let mut chain = Ruler::<&str, fn (&mut String)>::new();
 ///
 /// // define rules printing "hello" and "world"
 /// chain.add("hello", |s| s.push_str("hello"));
 /// chain.add("world", |s| s.push_str("world"));
 ///
-/// // open bracket should be before "hello", and closing one after "world"
+/// // an open bracket should be before "hello" and closing one after "world"
 /// chain.add("open_bracket", |s| s.push_str("[ ")).before("hello");
 /// chain.add("close_bracket", |s| s.push_str(" ]")).after("world");
 ///
@@ -42,8 +42,8 @@ use std::slice::Iter;
 /// This data structure contains any number of elements (M, T), where T is any type and
 /// M (mark) is its identifier.
 ///
-///  - `M` is used for ordering and dependency checking, it must implement `Eq + Copy + Hash + Debug`
-/// . Common choices for `M` are `u32`, `&'static str`, or a special `Symbol` type
+///  - `M` is used for ordering and dependency checking, it must implement `Eq + Copy + Hash + Debug.
+/// Common choices for `M` are `u32`, `&'static str`, or a special `Symbol` type
 /// designed for this purpose.
 ///
 ///  - `T` is any user-defined type. It's usually a function or boxed trait.
@@ -142,7 +142,9 @@ impl<M: Eq + Hash + Copy + Debug, T: Clone> Ruler<M, T> {
                     RuleItemConstraint::Require(v) => {
                         assert!(
                             idhash.contains_key(v),
-                            "missing dependency: {:?} requires {:?}", dep.marks.first().unwrap(), v
+                            "missing dependency: {:?} requires {:?}",
+                            dep.marks.first().unwrap(),
+                            v
                         );
                     }
                 }
@@ -153,7 +155,9 @@ impl<M: Eq + Hash + Copy + Debug, T: Clone> Ruler<M, T> {
         'outer: while deps_remaining > 0 {
             for idx in deps_order.iter().copied() {
                 let inserted = deps_inserted.get_mut(idx).unwrap();
-                if *inserted { continue; }
+                if *inserted {
+                    continue;
+                }
 
                 let dlist = deps_graph.get(idx).unwrap();
                 if dlist.is_empty() {
@@ -169,8 +173,9 @@ impl<M: Eq + Hash + Copy + Debug, T: Clone> Ruler<M, T> {
                 }
             }
 
-            #[cfg(debug_assertions)] {
-                // check cycles in dependency graph;
+            #[cfg(debug_assertions)]
+            {
+                // check cycles in the dependency graph;
                 // this is very suboptimal, but only used to generate a nice panic message.
                 // in release mode we'll just simply panic
                 for idx in deps_order.iter().copied() {
@@ -179,7 +184,9 @@ impl<M: Eq + Hash + Copy + Debug, T: Clone> Ruler<M, T> {
                     while let Some(didx) = vec.pop() {
                         let dlist = deps_graph.get(didx).unwrap();
                         for x in dlist.iter() {
-                            if seen.contains_key(x) { continue; }
+                            if seen.contains_key(x) {
+                                continue;
+                            }
                             vec.push(*x);
                             seen.insert(*x, didx);
                             if *x == idx {
@@ -190,9 +197,15 @@ impl<M: Eq + Hash + Copy + Debug, T: Clone> Ruler<M, T> {
                                     curr = *seen.get(&curr).unwrap();
                                 }
                                 backtrack.push(curr);
-                                let path = backtrack.iter()
+                                let path = backtrack
+                                    .iter()
                                     .rev()
-                                    .map(|x| format!("{:?}", self.deps.get(*x).unwrap().marks.first().unwrap()))
+                                    .map(|x| {
+                                        format!(
+                                            "{:?}",
+                                            self.deps.get(*x).unwrap().marks.first().unwrap()
+                                        )
+                                    })
                                     .collect::<Vec<String>>()
                                     .join(" < ");
                                 panic!("cyclic dependency: {}", path);
@@ -212,10 +225,13 @@ impl<M: Eq + Hash + Copy + Debug, T: Clone> Ruler<M, T> {
 
 impl<M: Eq + Hash + Copy + Debug, T: Clone> Debug for Ruler<M, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let vec: Vec<(usize, M)> = self.compiled.get_or_init(|| self.compile()).0
-                                    .iter()
-                                    .map(|idx| (*idx, *self.deps.get(*idx).unwrap().marks.first().unwrap()))
-                                    .collect();
+        let vec: Vec<(usize, M)> = self
+            .compiled
+            .get_or_init(|| self.compile())
+            .0
+            .iter()
+            .map(|idx| (*idx, *self.deps.get(*idx).unwrap().marks.first().unwrap()))
+            .collect();
 
         f.debug_struct("Ruler")
             .field("deps", &self.deps)
@@ -234,13 +250,13 @@ impl<M, T> Default for Ruler<M, T> {
 }
 
 ///
-/// Result of [Ruler::add](Ruler::add), allows to customize position of each rule.
+/// Result of [Ruler::add](Ruler::add), allows customizing the position of each rule.
 ///
 #[derive(Derivative)]
 #[derivative(Debug)]
 pub struct RuleItem<M, T> {
     marks: Vec<M>,
-    #[derivative(Debug="ignore")]
+    #[derivative(Debug = "ignore")]
     value: T,
     prio: RuleItemPriority,
     cons: Vec<RuleItemConstraint<M>>,
@@ -258,9 +274,9 @@ impl<M, T> RuleItem<M, T> {
 }
 
 impl<M: Copy, T> RuleItem<M, T> {
-    /// Make sure this rule will be inserted before any rule defined by `mark` (if such rule exists).
+    /// Make sure this rule will be inserted before any rule defined by `mark` (if such a rule exists).
     /// ```
-    /// use markdown_it::common::ruler::Ruler;
+    /// use markdown_that::common::ruler::Ruler;
     /// let mut chain = Ruler::<&str, fn (&mut String)>::new();
     ///
     /// chain.add("a", |s| s.push_str("bar"));
@@ -275,7 +291,7 @@ impl<M: Copy, T> RuleItem<M, T> {
         self
     }
 
-    /// Make sure this rule will be inserted after any rule defined by `mark` (if such rule exists).
+    /// Make sure this rule will be inserted after any rule defined by `mark` (if such a rule exists).
     /// Similar to [RuleItem::before](RuleItem::before).
     pub fn after(&mut self, mark: M) -> &mut Self {
         self.cons.push(RuleItemConstraint::After(mark));
@@ -285,7 +301,7 @@ impl<M: Copy, T> RuleItem<M, T> {
     /// This rule will be inserted as early as possible, while still taking into account dependencies,
     /// i.e. `.after(X).before_all()` causes this to be first rule after X.
     /// ```
-    /// use markdown_it::common::ruler::Ruler;
+    /// use markdown_that::common::ruler::Ruler;
     /// let mut chain = Ruler::<&str, fn (&mut String)>::new();
     ///
     /// chain.add("a", |s| s.push_str("A"));
@@ -303,7 +319,7 @@ impl<M: Copy, T> RuleItem<M, T> {
     }
 
     /// This rule will be inserted as late as possible, while still taking into account dependencies,
-    /// i.e. `.before(X).after_all()` causes this to be last rule before X.
+    /// i.e. `.before(X).after_all()` causes this to be the last rule before X.
     /// Similar to [RuleItem::before_all](RuleItem::before_all).
     pub fn after_all(&mut self) -> &mut Self {
         self.prio = RuleItemPriority::AfterAll;
@@ -313,7 +329,7 @@ impl<M: Copy, T> RuleItem<M, T> {
     /// Add another auxiliary identifier to this rule. It can be used to group together multiple
     /// rules with similar functionality.
     /// ```
-    /// use markdown_it::common::ruler::Ruler;
+    /// use markdown_that::common::ruler::Ruler;
     /// let mut chain = Ruler::<&str, fn (&mut String)>::new();
     ///
     /// chain.add("b", |s| s.push_str("B")).alias("BorC");
@@ -350,13 +366,12 @@ enum RuleItemPriority {
     AfterAll,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::Ruler;
 
     #[test]
-    #[should_panic(expected=r#"cyclic dependency: "A" < "B" < "C" < "D" < "E" < "F" < "A""#)]
+    #[should_panic(expected = r#"cyclic dependency: "A" < "B" < "C" < "D" < "E" < "F" < "A""#)]
     #[cfg(debug_assertions)]
     fn cyclic_dependency_debug() {
         let mut r = Ruler::new();
@@ -371,7 +386,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected=r#"cyclic dependency"#)]
+    #[should_panic(expected = r#"cyclic dependency"#)]
     fn cyclic_dependency() {
         let mut r = Ruler::new();
         r.add("A", ()).after("B");
@@ -380,9 +395,8 @@ mod tests {
         r.compile();
     }
 
-
     #[test]
-    #[should_panic(expected=r#"missing dependency: "C" requires "Z"#)]
+    #[should_panic(expected = r#"missing dependency: "C" requires "Z"#)]
     fn missing_require() {
         let mut r = Ruler::new();
         r.add("A", ());

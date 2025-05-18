@@ -6,9 +6,9 @@
 //! <https://spec.commonmark.org/0.30/#backslash-escapes>
 use crate::parser::inline::{InlineRule, InlineState, TextSpecial};
 use crate::plugins::cmark::inline::newline::Hardbreak;
-use crate::{MarkdownIt, Node};
+use crate::{MarkdownThat, Node};
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.inline.add_rule::<EscapeScanner>();
 }
 

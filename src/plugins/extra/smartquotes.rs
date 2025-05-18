@@ -1,21 +1,21 @@
 //! Replaces `"` and `'` quotes with "nicer" ones like `‘`, `’`, `“`, `”`, or
 //! with `’` for words like "isn't".
 //!
-//! This currently only supports single character quotes, which is a limitation
+//! This currently only supports single-character quotes, which is a limitation
 //! of the Rust implementation due to the use of `const` generics.
 //!
 //! ## Implementation notes
 //!
 //! The main obstacle to implementing this was the fact that the document is
 //! necessarily represented as a tree of nodes.
-//! Each node is thus necessarily referenced by its parents, which means that an
+//! Each node is thus necessarily referenced by its parents, which means that at
 //! any given moment we cannot hold a mutable reference to a node if any other
 //! part of the code holds a reference to the document. At least that's my
 //! understanding of the problem.
 //! The smartquotes algorithm from the JS library makes heavy use of iteration
 //! backwards and forwards through a flat list of tokens. This isn't really
 //! possible in the Rust implementation. Building a flat representation of all
-//! `Node` objects is easy, but holding that list precludes us from executing a
+//! `Node` objects is straightforward, but holding that list precludes us from executing a
 //! `root.walk_mut` call at the same time.
 //! On top of that, while the smartquotes algorithm iterates linearly over all
 //! nodes/tokens, looking at a specific token with index `j` can trigger
@@ -32,7 +32,7 @@ use crate::parser::inline::Text;
 use crate::plugins::cmark::block::paragraph::Paragraph;
 use crate::plugins::cmark::inline::newline::{Hardbreak, Softbreak};
 use crate::plugins::html::html_inline::HtmlInline;
-use crate::{MarkdownIt, Node};
+use crate::{MarkdownThat, Node};
 
 const APOSTROPHE: char = '\u{2019}';
 const SINGLE_QUOTE: char = '\'';
@@ -40,7 +40,7 @@ const DOUBLE_QUOTE: char = '"';
 const SPACE: char = ' ';
 
 /// Add smartquotes with the "classic" quote set of `‘`, `’`, `“`, and `”`.
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     add_with::<'‘', '’', '“', '”'>(md);
 }
 
@@ -50,7 +50,7 @@ pub fn add_with<
     const OPEN_DOUBLE_QUOTE: char,
     const CLOSE_DOUBLE_QUOTE: char,
 >(
-    md: &mut MarkdownIt,
+    md: &mut MarkdownThat,
 ) {
     md.add_rule::<SmartQuotesRule<
         OPEN_SINGLE_QUOTE,
@@ -67,14 +67,14 @@ pub fn add_with<
 /// information. This struct will be used to build a flat view of the document;
 /// the `Irrelevant` variant serves as a "filler" so that the indexes of the
 /// entries line up correctly with the order we see during tree traversal.
-enum FlatToken<'a> {
+enum FlatToken {
     LineBreak,
     Text {
-        content: &'a str,
+        content: String,
         nesting_level: u32,
     },
     HtmlInline {
-        content: &'a str,
+        content: String,
     },
     Irrelevant,
 }
@@ -89,9 +89,9 @@ enum QuoteType {
 /// Holds information about quotes we have encountered thus far.
 ///
 /// These quotes may or may not be used to close a pair further down the line.
-/// The different fields thus hold all the information we need to a) decide
-/// whether or not to match them up with another quote we encounter, and b) to
-/// perform the correct replacement, should be indeed use this quote to close a
+/// The different fields thus hold all the information we need to a. decide
+/// whether to match them up with another quote we encounter, and b. to
+/// perform the correct replacement, should be indeed using this quote to close a
 /// pair.
 struct QuoteMarker {
     /// The iteration index of the node in which this quote was found.
@@ -100,7 +100,7 @@ struct QuoteMarker {
     /// depth-first walk of the document tree. Since we can only _modify_ nodes
     /// during a walk, we rely on this index to tell us which nodes to modify.
     walk_index: usize,
-    /// The position of the quote within node's `content`
+    /// The position of the quote within the node's `content`
     quote_position: usize,
     /// Whether this is a single or a double quote
     quote_type: QuoteType,
@@ -143,7 +143,7 @@ impl<
         CLOSE_DOUBLE_QUOTE,
     >
 {
-    fn run(root: &mut Node, _: &MarkdownIt) {
+    fn run(root: &mut Node, _: &MarkdownThat) {
         let text_tokens = all_text_tokens(root);
 
         let replacement_ops = Self::compute_replacements(text_tokens);
@@ -170,10 +170,10 @@ impl<
     >
     SmartQuotesRule<OPEN_SINGLE_QUOTE, CLOSE_SINGLE_QUOTE, OPEN_DOUBLE_QUOTE, CLOSE_DOUBLE_QUOTE>
 {
-    /// Walk the list of tokens to figure out what needs replacing where. to do
+    /// Walk the list of tokens to figure out what needs replacing where. To do
     /// this, we need to search back and forth over the nodes to find matching
     /// quotes across nodes. The borrow checker won't let us handle the entire
-    /// set of nodes as mutable at the same time however, so all we do here is
+    /// set of nodes as mutable at the same time, however, so all we do here is
     /// figure out what we _want_ to replace in which node.
     fn compute_replacements(text_tokens: Vec<FlatToken>) -> HashMap<usize, HashMap<usize, char>> {
         let mut quote_stack: Vec<QuoteMarker> = Vec::new();
@@ -220,7 +220,7 @@ impl<
                 can_open_or_close(&quote_type, last_char, next_char);
 
             if !can_open && !can_close {
-                // if this is a single quote then we're in the middle of a word and
+                // if this is a single quote, then we're in the middle of a word and
                 // assume it to be an apostrophe
                 if quote_type == QuoteType::Single {
                     result.push(ReplacementOp {
@@ -309,7 +309,7 @@ impl<
 /// Produces a simplified flat list of all tokens, with the necessary
 /// information to do smart quote replacement.
 ///
-/// This handles inline html and inline code like JS version seems to do.
+/// This handles inline HTML and inline code like the JS version seems to do.
 /// This list is a work-around for the fact that we can't build a flat list of
 /// all nodes for iteration back and forth, and at the same time do a mutable
 /// walk on the document tree.
@@ -326,12 +326,12 @@ fn all_text_tokens(root: &Node) -> Vec<FlatToken> {
     root.walk(|node, nesting_level| {
         if let Some(text_node) = node.cast::<Text>() {
             result.push(FlatToken::Text {
-                content: &text_node.content,
+                content: text_node.content.clone(),
                 nesting_level,
             });
         } else if let Some(html_node) = node.cast::<HtmlInline>() {
             result.push(FlatToken::HtmlInline {
-                content: &html_node.content,
+                content: html_node.content.clone(),
             });
         } else if node.is::<Paragraph>() || node.is::<Hardbreak>() || node.is::<Softbreak>() {
             result.push(FlatToken::LineBreak);
@@ -346,7 +346,7 @@ fn all_text_tokens(root: &Node) -> Vec<FlatToken> {
 /// Checks whether we can open or close a pair of quotes, given the quote type
 /// and the type of characters before and after the quote
 fn can_open_or_close(quote_type: &QuoteType, last_char: char, next_char: char) -> (bool, bool) {
-    // special case: 1"" -> count first quote as an inch
+    // special case: 1"" -> count the first quote as an inch
     // We handle this before doing anything else to simplify the conditions
     // below.
     let is_double = *quote_type == QuoteType::Double;
@@ -358,13 +358,13 @@ fn can_open_or_close(quote_type: &QuoteType, last_char: char, next_char: char) -
 
     // using `is_ascii_punctuation` here matches the JS version exactly, but
     // that also means we might inherit that implementation's shortcomings
-    // by ignoring unicode punctuation. `is_punct_char` however should
+    // by ignoring Unicode punctuation. `is_punct_char `, however, should
     // compensate for this.
     let is_last_punctuation = last_char.is_ascii_punctuation() || is_punct_char(last_char);
     let is_next_punctuation = next_char.is_ascii_punctuation() || is_punct_char(next_char);
 
     // Yet again we rely on rust's built-in character handling. The definition
-    // of `is_whitespace` according to the unicode proplist.txt shows that the
+    // of `is_whitespace` according to the Unicode proplist.txt shows that the
     // difference to the JS version.
     // https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
     //
@@ -379,7 +379,7 @@ fn can_open_or_close(quote_type: &QuoteType, last_char: char, next_char: char) -
         !is_last_whitespace && (!is_last_punctuation || is_next_whitespace || is_next_punctuation);
 
     if can_open && can_close {
-        // Replace quotes in the middle of punctuation sequence, but not
+        // Replace quotes in the middle of a punctuation sequence, but not
         // in the middle of the words, i.e.:
         //
         // 1. foo " bar " baz - not replaced
@@ -404,7 +404,7 @@ fn execute_replacements(replacement_ops: &HashMap<usize, char>, content: &str) -
 ///
 /// This _might_ be simplified by removing the `rev` call and using
 /// `Vec::take_while` instead, but I'm not 100% sure yet that the levels on the
-/// stack are really monotonously increasing, so I'm leaving it as is for now.
+/// stack are really monotonously increasing, so I'm leaving it as it is for now.
 fn truncate_stack(quote_stack: &mut Vec<QuoteMarker>, level: u32) {
     let stack_len = quote_stack
         .iter()
@@ -444,12 +444,12 @@ fn find_quotes(content: &str) -> impl Iterator<Item = (usize, QuoteType)> + '_ {
 /// sequence of the text tokens is searched forwards from that point and the
 /// first character is returned.
 ///
-/// If a line break or the end of the document is encountered during search,
+/// If a line breaks or the end of the document is encountered during search,
 /// space (0x20) is returned.
 ///
 /// This function is a bit simpler than `find_last_char_before` because Vec
 /// conveniently returns None for out-of-range indexes at the top end, while not
-/// allowing to index with negative index.
+/// allowing to index with a negative index.
 fn find_first_char_after(
     text_tokens: &[FlatToken],
     token_index: usize,
@@ -485,7 +485,7 @@ fn find_first_char_after(
 ///
 /// The position given is that of a quote we found. It is identified by its
 /// token/node index and the position of the quote inside that token. The full
-/// sequence of the text tokens is searched backwards from that point and the
+/// sequence of the text tokens is searched backwards from that point, and the
 /// first character is returned.
 ///
 /// If a line break or the beginning of the document is encountered during
@@ -508,7 +508,7 @@ fn find_last_char_before(
             FlatToken::Irrelevant => continue,
         };
 
-        // this is _not_ the first index we want to look at, but rather the
+        // This is _not_ the first index we want to look at, but rather the
         // index just _after_ that.  The reason is simply that this is `usize`
         // and we want to first check if it's possible to still subtract 1 from
         // it without panicking.
@@ -517,7 +517,7 @@ fn find_last_char_before(
         } else {
             token.chars().count()
         };
-        // means we can't go any further left -> try the next token (i.e. the
+        // means we can't go any further left -> try the next token (i.e., the
         // one preceding this one)
         if start_index == 0 {
             continue;
@@ -536,7 +536,7 @@ fn find_last_char_before(
 mod tests {
     #[test]
     fn smartquotes_basics() {
-        let md = &mut crate::MarkdownIt::new();
+        let md = &mut crate::MarkdownThat::new();
         crate::plugins::cmark::add(md);
         crate::plugins::extra::smartquotes::add(md);
         let html = md.parse(r#"'hello' "world""#).render();
@@ -545,7 +545,7 @@ mod tests {
 
     #[test]
     fn smartquotes_shouldnt_affect_html() {
-        let md = &mut crate::MarkdownIt::new();
+        let md = &mut crate::MarkdownThat::new();
         crate::plugins::cmark::add(md);
         crate::plugins::html::html_inline::add(md);
         crate::plugins::extra::smartquotes::add(md);
@@ -556,7 +556,7 @@ mod tests {
     #[test]
     fn smartquotes_should_work_with_typographer() {
         // regression test for https://github.com/rlidwka/markdown-it.rs/issues/26
-        let md = &mut crate::MarkdownIt::new();
+        let md = &mut crate::MarkdownThat::new();
         crate::plugins::cmark::add(md);
         crate::plugins::html::html_inline::add(md);
         crate::plugins::extra::typographer::add(md);

@@ -5,10 +5,10 @@ mod inline_rule;
 
 fn main() {
     // create markdown parser
-    let md = &mut markdown_it::MarkdownIt::new();
+    let md = &mut markdown_that::MarkdownThat::new();
 
     // add commonmark syntax, you almost always want to do that
-    markdown_it::plugins::cmark::add(md);
+    markdown_that::plugins::cmark::add(md);
 
     // add custom three rules described above
     inline_rule::add(md);

@@ -1,7 +1,7 @@
 use crate::parser::core::rule_builder;
 use crate::Node;
 
-/// Each member of inline rule chain must implement this trait
+/// Each member of an inline rule chain must implement this trait
 pub trait InlineRule : 'static {
     const MARKER: char;
 

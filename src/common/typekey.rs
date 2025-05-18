@@ -9,7 +9,7 @@ use std::hash::{Hash, Hasher};
 /// It acts as TypeId when hashed or compared, and it acts as type_name when printed.
 /// Used to improve debuggability of type ids in hashmaps in particular.
 /// ```
-/// # use markdown_it::common::TypeKey;
+/// # use markdown_that::common::TypeKey;
 /// struct A;
 /// struct B;
 ///
@@ -22,18 +22,21 @@ use std::hash::{Hash, Hasher};
 /// dbg!(set);
 /// ```
 pub struct TypeKey {
-    /// type id (read only)
-    pub id:   TypeId,
-    /// type name (read only)
+    /// type id (read-only)
+    pub id: TypeId,
+    /// type name (read-only)
     pub name: &'static str,
 }
 
 impl TypeKey {
     #[must_use]
-    /// Similar to [TypeId::of](std::any::TypeId::of), returns `TypeKey`
+    /// Similar to [TypeId::of](TypeId::of), returns `TypeKey`
     /// of the type this generic function has been instantiated with.
     pub fn of<T: ?Sized + 'static>() -> Self {
-        Self { id: TypeId::of::<T>(), name: any::type_name::<T>() }
+        Self {
+            id: TypeId::of::<T>(),
+            name: any::type_name::<T>(),
+        }
     }
 }
 
@@ -65,10 +68,26 @@ mod tests {
     fn typekey_eq() {
         struct A;
         struct B;
-        assert_eq!(TypeKey { id: std::any::TypeId::of::<A>(), name: "foo" },
-                   TypeKey { id: std::any::TypeId::of::<A>(), name: "bar" });
-        assert_ne!(TypeKey { id: std::any::TypeId::of::<A>(), name: "foo" },
-                   TypeKey { id: std::any::TypeId::of::<B>(), name: "foo" });
+        assert_eq!(
+            TypeKey {
+                id: std::any::TypeId::of::<A>(),
+                name: "foo"
+            },
+            TypeKey {
+                id: std::any::TypeId::of::<A>(),
+                name: "bar"
+            }
+        );
+        assert_ne!(
+            TypeKey {
+                id: std::any::TypeId::of::<A>(),
+                name: "foo"
+            },
+            TypeKey {
+                id: std::any::TypeId::of::<B>(),
+                name: "foo"
+            }
+        );
     }
 
     #[test]

@@ -7,11 +7,11 @@
 //!
 //! Add each plugin you need by invoking `add` function like this:
 //! ```rust
-//! let md = &mut markdown_it::MarkdownIt::new();
-//! markdown_it::plugins::cmark::add(md);
-//! markdown_it::plugins::extra::add(md);
-//! markdown_it::plugins::html::add(md);
-//! markdown_it::plugins::sourcepos::add(md);
+//! let md = &mut markdown_that::MarkdownThat::new();
+//! markdown_that::plugins::cmark::add(md);
+//! markdown_that::plugins::extra::add(md);
+//! markdown_that::plugins::html::add(md);
+//! markdown_that::plugins::sourcepos::add(md);
 //! // ...
 //! ```
 pub mod cmark;

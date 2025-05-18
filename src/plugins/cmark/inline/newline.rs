@@ -5,7 +5,7 @@
 //!  - <https://spec.commonmark.org/0.30/#hard-line-breaks>
 //!  - <https://spec.commonmark.org/0.30/#soft-line-breaks>
 use crate::parser::inline::{InlineRule, InlineState};
-use crate::{MarkdownIt, Node, NodeValue, Renderer};
+use crate::{MarkdownThat, Node, NodeValue, Renderer};
 
 #[derive(Debug)]
 pub struct Hardbreak;
@@ -26,7 +26,7 @@ impl NodeValue for Softbreak {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.inline.add_rule::<NewlineScanner>();
 }
 

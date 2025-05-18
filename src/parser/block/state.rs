@@ -3,19 +3,22 @@
 use crate::common::sourcemap::SourcePos;
 use crate::common::utils::calc_right_whitespace_with_tabstops;
 use crate::parser::extset::RootExtSet;
-use crate::{MarkdownIt, Node};
+use crate::{MarkdownThat, Node};
 
 #[derive(Debug)]
 #[readonly::make]
 /// Sandbox object containing data required to parse block structures.
-pub struct BlockState<'a, 'b> where 'b: 'a {
+pub struct BlockState<'a, 'b>
+where
+    'b: 'a,
+{
     /// Markdown source.
     #[readonly]
     pub src: &'b str,
 
     /// Link to parser instance.
     #[readonly]
-    pub md: &'a MarkdownIt,
+    pub md: &'a MarkdownThat,
 
     pub root_ext: &'b mut RootExtSet,
 
@@ -25,7 +28,7 @@ pub struct BlockState<'a, 'b> where 'b: 'a {
     pub line_offsets: Vec<LineOffset>,
 
     /// Current block content indent (for example, if we are
-    /// inside a list, it would be positioned after list marker).
+    /// inside a list, it would be positioned after the list marker).
     pub blk_indent: usize,
 
     /// Current line in src.
@@ -99,7 +102,12 @@ pub struct LineOffset {
 }
 
 impl<'a, 'b> BlockState<'a, 'b> {
-    pub fn new(src: &'b str, md: &'a MarkdownIt, root_ext: &'b mut RootExtSet, node: Node) -> Self {
+    pub fn new(
+        src: &'b str,
+        md: &'a MarkdownThat,
+        root_ext: &'b mut RootExtSet,
+        node: Node,
+    ) -> Self {
         let mut result = Self {
             src,
             md,
@@ -224,7 +232,13 @@ impl<'a, 'b> BlockState<'a, 'b> {
 
     /// Cut a range of lines begin..end (not including end) from the source without preceding indent.
     /// Returns a string (lines) plus a mapping (start of each line in result -> start of each line in source).
-    pub fn get_lines(&self, begin: usize, end: usize, indent: usize, keep_last_lf: bool) -> (String, Vec<(usize, usize)>) {
+    pub fn get_lines(
+        &self,
+        begin: usize,
+        end: usize,
+        indent: usize,
+        keep_last_lf: bool,
+    ) -> (String, Vec<(usize, usize)>) {
         debug_assert!(begin <= end);
 
         let mut line = begin;
@@ -238,17 +252,19 @@ impl<'a, 'b> BlockState<'a, 'b> {
 
             let (num_spaces, first) = calc_right_whitespace_with_tabstops(
                 &self.src[offsets.line_start..offsets.first_nonspace],
-                offsets.indent_nonspace - indent as i32
+                offsets.indent_nonspace - indent as i32,
             );
 
-            mapping.push(( result.len(), offsets.line_start+first ));
+            mapping.push((result.len(), offsets.line_start + first));
             result += &" ".repeat(num_spaces);
-            result += &self.src[offsets.line_start+first..last];
-            if add_last_lf { result.push('\n'); }
+            result += &self.src[offsets.line_start + first..last];
+            if add_last_lf {
+                result.push('\n');
+            }
             line += 1;
         }
 
-        ( result, mapping )
+        (result, mapping)
     }
 
     #[must_use]
@@ -258,7 +274,7 @@ impl<'a, 'b> BlockState<'a, 'b> {
 
         Some(SourcePos::new(
             self.line_offsets[start_line].first_nonspace,
-            self.line_offsets[end_line].line_end
+            self.line_offsets[end_line].line_end,
         ))
     }
 

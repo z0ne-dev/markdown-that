@@ -5,7 +5,7 @@ use regex::Regex;
 use std::fmt::Debug;
 
 pub trait LinkFormatter : Debug + Send + Sync {
-    /// Validate link url, return `Some(())` if it is allowed
+    /// Validate the link url, return `Some(())` if it is allowed
     /// and `None` if it is a security risk.
     fn validate_link(&self, url: &str) -> Option<()>;
 
@@ -22,8 +22,8 @@ pub trait LinkFormatter : Debug + Send + Sync {
 /// This validator can prohibit more than really needed to prevent XSS. It's a
 /// tradeoff to keep code simple and to be secure by default.
 ///
-/// If you need different setup - override validator method as you wish. Or
-/// replace it with dummy function and use external sanitizer.
+/// If you need a different setup-override the validator method as you wish. Or
+/// replace it with a placeholder function and use external sanitizer.
 ///
 #[derive(Default, Debug)]
 pub struct MDLinkFormatter;

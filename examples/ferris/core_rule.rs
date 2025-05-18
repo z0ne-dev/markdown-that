@@ -2,8 +2,8 @@
 
 use super::block_rule::BlockFerris;
 use super::inline_rule::InlineFerris;
-use markdown_it::parser::core::CoreRule;
-use markdown_it::{MarkdownIt, Node, NodeValue, Renderer};
+use markdown_that::parser::core::CoreRule;
+use markdown_that::{MarkdownThat, Node, NodeValue, Renderer};
 
 #[derive(Debug)]
 // This is a structure that represents your custom Node in AST,
@@ -42,7 +42,7 @@ impl CoreRule for FerrisCounterRule {
     // It has `root` node of the AST as an argument and may modify its
     // contents as you like.
     //
-    fn run(root: &mut Node, _: &MarkdownIt) {
+    fn run(root: &mut Node, _: &MarkdownThat) {
         let mut counter = 0;
 
         // walk through AST recursively and count the number of two
@@ -58,7 +58,7 @@ impl CoreRule for FerrisCounterRule {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     // insert this rule into parser
     md.add_rule::<FerrisCounterRule>();
 }

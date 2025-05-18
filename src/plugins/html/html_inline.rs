@@ -3,7 +3,7 @@
 //! <https://spec.commonmark.org/0.30/#raw-html>
 use super::utils::regexps::*;
 use crate::parser::inline::{InlineRule, InlineState};
-use crate::{MarkdownIt, Node, NodeValue, Renderer};
+use crate::{MarkdownThat, Node, NodeValue, Renderer};
 
 #[derive(Debug)]
 pub struct HtmlInline {
@@ -16,7 +16,7 @@ impl NodeValue for HtmlInline {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.inline.add_rule::<HtmlInlineScanner>();
 }
 

@@ -2,17 +2,17 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 pub fn benchmark(c: &mut Criterion) {
     let source = std::fs::read_to_string("test-file.md").unwrap();
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(md);
-    markdown_it::plugins::html::add(md);
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(md);
+    markdown_that::plugins::html::add(md);
     c.bench_function("markdown-it", |b| b.iter(|| {
         let html = md.parse(&source).render();
         black_box(html);
     }));
 
-    let md = &mut markdown_it_v5::MarkdownIt::new();
-    markdown_it_v5::plugins::cmark::add(md);
-    markdown_it_v5::plugins::html::add(md);
+    let md = &mut markdown_that_v5::MarkdownThat::new();
+    markdown_that_v5::plugins::cmark::add(md);
+    markdown_that_v5::plugins::html::add(md);
     c.bench_function("markdown-it-v5", |b| b.iter(|| {
         let html = md.parse(&source).render();
         black_box(html);

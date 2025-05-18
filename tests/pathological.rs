@@ -1,14 +1,14 @@
 // run it like this:
 // cargo test --test pathological --jobs 1 -- --nocapture --test-threads=1
-use markdown_it::MarkdownIt;
+use markdown_that::MarkdownThat;
 use once_cell::sync::Lazy;
 use std::time::SystemTime;
 
-static MD : Lazy<MarkdownIt> = Lazy::new(|| {
-    let mut parser = markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(&mut parser);
-    markdown_it::plugins::html::add(&mut parser);
-    markdown_it::plugins::extra::add(&mut parser);
+static MD : Lazy<MarkdownThat> = Lazy::new(|| {
+    let mut parser = markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(&mut parser);
+    markdown_that::plugins::html::add(&mut parser);
+    markdown_that::plugins::extra::add(&mut parser);
     parser
 });
 

@@ -10,9 +10,9 @@
 pub mod block;
 pub mod inline;
 
-use crate::MarkdownIt;
+use crate::MarkdownThat;
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     inline::newline::add(md);
     inline::escape::add(md);
     inline::backticks::add(md);

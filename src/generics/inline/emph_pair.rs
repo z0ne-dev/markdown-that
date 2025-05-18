@@ -1,6 +1,6 @@
 //! Structure similar to `*emphasis*` with configurable markers of fixed length.
 //!
-//! There are many structures in various markdown flavors that
+//! There are many structures in various Markdown flavors that
 //! can be implemented with this, namely:
 //!
 //!  - `*emphasis*` or `_emphasis_` -> `<em>emphasis</em>`
@@ -23,8 +23,8 @@
 //! Here is an example of implementing superscript in your custom code:
 //!
 //! ```rust
-//! use markdown_it::generics::inline::emph_pair;
-//! use markdown_it::{MarkdownIt, Node, NodeValue, Renderer};
+//! use markdown_that::generics::inline::emph_pair;
+//! use markdown_that::{MarkdownThat, Node, NodeValue, Renderer};
 //!
 //! #[derive(Debug)]
 //! struct Superscript;
@@ -36,7 +36,7 @@
 //!     }
 //! }
 //!
-//! let md = &mut MarkdownIt::new();
+//! let md = &mut MarkdownThat::new();
 //! emph_pair::add_with::<'^', 1, true>(md, || Node::new(Superscript));
 //!
 //! let html = md.parse("e^iπ^+1=0").render();
@@ -50,17 +50,17 @@ use std::cmp::min;
 
 use crate::common::sourcemap::SourcePos;
 use crate::parser::core::CoreRule;
-use crate::parser::extset::{MarkdownItExt, NodeExt};
+use crate::parser::extset::{MarkdownThatExt, NodeExt};
 use crate::parser::inline::builtin::InlineParserRule;
 use crate::parser::inline::{InlineRule, InlineState, Text};
-use crate::{MarkdownIt, Node, NodeValue};
+use crate::{MarkdownThat, Node, NodeValue};
 
 #[derive(Debug, Default)]
 struct PairConfig<const MARKER: char> {
     inserted: bool,
     fns: [Option<fn () -> Node>; 3],
 }
-impl<const MARKER: char> MarkdownItExt for PairConfig<MARKER> {}
+impl<const MARKER: char> MarkdownThatExt for PairConfig<MARKER> {}
 
 #[derive(Debug, Default)]
 struct OpenersBottom<const MARKER: char>([ usize; 6 ]);
@@ -75,7 +75,7 @@ pub struct EmphMarker {
     // Total length of these series of delimiters.
     pub length:    usize,
 
-    // Remaining length that's not already matched to other delimiters.
+    // Remaining length not already matched to other delimiters.
     pub remaining: usize,
 
     // Boolean flags that determine if this delimiter could open or close
@@ -84,10 +84,10 @@ pub struct EmphMarker {
     pub close:     bool,
 }
 
-// this node is supposed to be replaced by actual emph or text node
+// this node is supposed to be replaced by an actual emph or text node
 impl NodeValue for EmphMarker {}
 
-pub fn add_with<const MARKER: char, const LENGTH: u8, const CAN_SPLIT_WORD: bool>(md: &mut MarkdownIt, f: fn () -> Node) {
+pub fn add_with<const MARKER: char, const LENGTH: u8, const CAN_SPLIT_WORD: bool>(md: &mut MarkdownThat, f: fn () -> Node) {
     let pair_config = md.ext.get_or_insert_default::<PairConfig<MARKER>>();
     pair_config.fns[LENGTH as usize - 1] = Some(f);
 
@@ -135,8 +135,8 @@ impl<const MARKER: char, const CAN_SPLIT_WORD: bool> InlineRule for EmphPairScan
     }
 }
 
-/// Assuming last token is a closing delimiter we just inserted,
-/// try to find opener(s). If any are found, move stuff to nested emph node.
+/// Assuming the last token is a closing delimiter we just inserted,
+/// try to find opener(s). If any are found, move stuff to a nested emph node.
 fn scan_and_match_delimiters<const MARKER: char>(state: &mut InlineState, mut closer_token: Node) -> Node {
     if state.node.children.is_empty() { return closer_token; } // must have at least opener and closer
 
@@ -172,8 +172,8 @@ fn scan_and_match_delimiters<const MARKER: char>(state: &mut InlineState, mut cl
                     }
                 }
 
-                // If matched_fn isn't found, it can only mean that function is defined for larger marker
-                // than we have (e.g. function defined for **, we have *).
+                // If matched_fn isn't found, it can only mean that the function is defined for a larger marker
+                // than we have (e.g., function defined for **, we have *).
                 // Treat this as "marker not found".
                 if matched_rule.is_none() { break; }
 
@@ -204,7 +204,7 @@ fn scan_and_match_delimiters<const MARKER: char>(state: &mut InlineState, mut cl
 
                 new_token.srcmap = state.get_map(start_map_pos, end_map_pos);
 
-                // remove empty node as a small optimization so we can do less work later
+                // remove the empty node as a small optimization so we can do less work later
                 if opener.remaining == 0 { state.node.children.pop(); }
 
                 new_min_opener_idx = 0;
@@ -219,8 +219,8 @@ fn scan_and_match_delimiters<const MARKER: char>(state: &mut InlineState, mut cl
     }
 
     if new_min_opener_idx != 0 {
-        // If match for this delimiter run failed, we want to set lower bound for
-        // future lookups. This is required to make sure algorithm has linear
+        // If the match for this delimiter run failed, we want to set a lower bound for
+        // future lookups. This is required to make sure the algorithm has linear
         // complexity.
         //
         // See details here:
@@ -230,7 +230,7 @@ fn scan_and_match_delimiters<const MARKER: char>(state: &mut InlineState, mut cl
         openers_for_marker.0[openers_parameter] = new_min_opener_idx;
     }
 
-    // remove empty node as a small optimization so we can do less work later
+    // remove the empty node as a small optimization so we can do less work later
     if closer.remaining > 0 {
         closer_token.replace(closer);
         closer_token
@@ -264,7 +264,7 @@ fn is_odd_match(opener: &EmphMarker, closer: &EmphMarker) -> bool {
 #[doc(hidden)]
 pub struct FragmentsJoin;
 impl CoreRule for FragmentsJoin {
-    fn run(node: &mut Node, _: &MarkdownIt) {
+    fn run(node: &mut Node, _: &MarkdownThat) {
         node.walk_mut(|node, _| fragments_join(node));
     }
 }
@@ -273,8 +273,8 @@ impl CoreRule for FragmentsJoin {
 /// Clean up tokens after emphasis and strikethrough postprocessing:
 /// merge adjacent text nodes into one and re-calculate all token levels
 ///
-/// This is necessary because initially emphasis delimiter markers (*, _, ~)
-/// are treated as their own separate text tokens. Then emphasis rule either
+/// This is necessary because initial emphasis delimiter markers (*, _, ~)
+/// are treated as their own separate text tokens. Then the emphasis rule either
 /// leaves them as text (needed to merge with adjacent text) or turns them
 /// into opening/closing tags (which messes up levels inside).
 ///

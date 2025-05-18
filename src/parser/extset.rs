@@ -6,9 +6,9 @@ use downcast_rs::{impl_downcast, Downcast};
 use std::fmt::Debug;
 
 /// Extension set member for the entire parser (only writable at init).
-pub trait MarkdownItExt : Debug + Downcast + Send + Sync {}
-impl_downcast!(MarkdownItExt);
-extension_set!(MarkdownItExtSet, MarkdownItExt);
+pub trait MarkdownThatExt : Debug + Downcast + Send + Sync {}
+impl_downcast!(MarkdownThatExt);
+extension_set!(MarkdownThatExtSet, MarkdownThatExt);
 
 /// Extension set member for an arbitrary AST node.
 pub trait NodeExt : Debug + Downcast + Send + Sync {}

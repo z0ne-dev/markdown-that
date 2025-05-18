@@ -24,6 +24,6 @@ pub mod generics;
 pub mod parser;
 pub mod plugins;
 
-pub use parser::main::MarkdownIt;
+pub use parser::main::MarkdownThat;
 pub use parser::node::{Node, NodeValue};
 pub use parser::renderer::Renderer;

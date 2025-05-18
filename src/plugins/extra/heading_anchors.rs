@@ -3,11 +3,11 @@
 //! ```rust
 //! // it is recommended to use 3rd party slug implementation
 //! //let slugify_fn = |s: &str| slug::slugify(s);
-//! let slugify_fn = markdown_it::plugins::extra::heading_anchors::simple_slugify_fn;
+//! let slugify_fn = markdown_that::plugins::extra::heading_anchors::simple_slugify_fn;
 //!
-//! let md = &mut markdown_it::MarkdownIt::new();
-//! markdown_it::plugins::cmark::add(md);
-//! markdown_it::plugins::extra::heading_anchors::add(md, slugify_fn);
+//! let md = &mut markdown_that::MarkdownThat::new();
+//! markdown_that::plugins::cmark::add(md);
+//! markdown_that::plugins::extra::heading_anchors::add(md, slugify_fn);
 //!
 //! assert_eq!(
 //!     md.parse("## An example heading").render(),
@@ -17,12 +17,12 @@
 use std::fmt::Debug;
 
 use crate::parser::core::CoreRule;
-use crate::parser::extset::MarkdownItExt;
+use crate::parser::extset::MarkdownThatExt;
 use crate::plugins::cmark::block::heading::ATXHeading;
 use crate::plugins::cmark::block::lheading::SetextHeader;
-use crate::{MarkdownIt, Node};
+use crate::{MarkdownThat, Node};
 
-pub fn add(md: &mut MarkdownIt, slugify: fn (&str) -> String) {
+pub fn add(md: &mut MarkdownThat, slugify: fn (&str) -> String) {
     md.ext.insert(SlugifyFunction(slugify));
     md.add_rule::<AddHeadingAnchors>();
 }
@@ -41,7 +41,7 @@ pub fn simple_slugify_fn(s: &str) -> String {
 
 #[derive(Clone, Copy)]
 struct SlugifyFunction(fn (&str) -> String);
-impl MarkdownItExt for SlugifyFunction {}
+impl MarkdownThatExt for SlugifyFunction {}
 
 impl Default for SlugifyFunction {
     fn default() -> Self {
@@ -57,7 +57,7 @@ impl Debug for SlugifyFunction {
 
 pub struct AddHeadingAnchors;
 impl CoreRule for AddHeadingAnchors {
-    fn run(root: &mut Node, md: &MarkdownIt) {
+    fn run(root: &mut Node, md: &MarkdownThat) {
         let slugify = md.ext.get::<SlugifyFunction>().copied().unwrap_or_default().0;
 
         root.walk_mut(|node, _| {

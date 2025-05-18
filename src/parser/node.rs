@@ -23,7 +23,7 @@ pub struct Node {
     /// Custom data specific to this token.
     pub ext: NodeExtSet,
 
-    /// Additional attributes to be added to resulting html.
+    /// Additional attributes to be added to the resulting HTML.
     pub attrs: Vec<(&'static str, String)>,
 
     /// Type name, used for debugging.
@@ -53,25 +53,25 @@ impl Node {
         self.node_type.name
     }
 
-    /// Check that this node value is of given type.
+    /// Check that this node value is of a given type.
     pub fn is<T: NodeValue>(&self) -> bool {
         self.node_type.id == TypeId::of::<T>()
     }
 
-    /// Downcast node value to specific type.
+    /// Downcast node value to a specific type.
     pub fn cast<T: NodeValue>(&self) -> Option<&T> {
         if self.node_type.id == TypeId::of::<T>() {
             Some(self.node_value.downcast_ref::<T>().unwrap())
             // performance note: `node_type.id` improves walk speed by a LOT by removing indirection
             // (~5% of overall program speed), so having type id duplicated in Node is very beneficial;
             // we can also remove extra check with downcast_unchecked, but it doesn't do much
-            //Some(unsafe { &*(&*self.node_value as *const dyn NodeValue as *const T) })
+            // Some(unsafe { &*(&*self.node_value as *const dyn NodeValue as *const T) })
         } else {
             None
         }
     }
 
-    /// Downcast node value to specific type.
+    /// Downcast node value to a specific type.
     pub fn cast_mut<T: NodeValue>(&mut self) -> Option<&mut T> {
         if self.node_type.id == TypeId::of::<T>() {
             Some(self.node_value.downcast_mut::<T>().unwrap())
@@ -98,18 +98,18 @@ impl Node {
         fmt.into()
     }
 
-    /// Replace custom value with another value (this is roughly equivalent
+    /// Replace a custom value with another value (this is roughly equivalent
     /// to replacing the entire node and copying children and sourcemaps).
     pub fn replace<T: NodeValue>(&mut self, value: T) {
         self.node_type  = TypeKey::of::<T>();
         self.node_value = Box::new(value);
     }
 
-    /// Execute function `f` recursively on every member of AST tree
+    /// Execute function `f` recursively on every member of an AST tree
     /// (using preorder deep-first search).
-    pub fn walk<'a>(&'a self, mut f: impl FnMut(&'a Node, u32)) {
+    pub fn walk(&self, mut f: impl FnMut(&Node, u32)) {
         // performance note: this is faster than emulating recursion using vec stack
-        fn walk_recursive<'b>(node: &'b Node, depth: u32, f: &mut impl FnMut(&'b Node, u32)) {
+        fn walk_recursive(node: &Node, depth: u32, f: &mut impl FnMut(&Node, u32)) {
             f(node, depth);
             for n in node.children.iter() {
                 stacker::maybe_grow(64*1024, 1024*1024, || {
@@ -121,7 +121,7 @@ impl Node {
         walk_recursive(self, 0, &mut f);
     }
 
-    /// Execute function `f` recursively on every member of AST tree
+    /// Execute function `f` recursively on every member of an AST tree
     /// (using preorder deep-first search).
     pub fn walk_mut(&mut self, mut f: impl FnMut(&mut Node, u32)) {
         // performance note: this is faster than emulating recursion using vec stack
@@ -137,7 +137,7 @@ impl Node {
         walk_recursive(self, 0, &mut f);
     }
 
-    /// Execute function `f` recursively on every member of AST tree
+    /// Execute function `f` recursively on every member of an AST tree
     /// (using postorder deep-first search).
     pub fn walk_post(&self, mut f: impl FnMut(&Node, u32)) {
         fn walk_recursive(node: &Node, depth: u32, f: &mut impl FnMut(&Node, u32)) {
@@ -152,7 +152,7 @@ impl Node {
         walk_recursive(self, 0, &mut f);
     }
 
-    /// Execute function `f` recursively on every member of AST tree
+    /// Execute function `f` recursively on every member of an AST tree
     /// (using postorder deep-first search).
     pub fn walk_post_mut(&mut self, mut f: impl FnMut(&mut Node, u32)) {
         fn walk_recursive(node: &mut Node, depth: u32, f: &mut impl FnMut(&mut Node, u32)) {
@@ -198,7 +198,7 @@ pub struct NodeEmpty;
 impl NodeValue for NodeEmpty {}
 
 impl Default for Node {
-    /// Create empty Node. Empty node should only be used as placeholder for functions like
+    /// Create empty Node. Empty node should only be used as a placeholder for functions like
     /// std::mem::take, and it cannot be rendered.
     fn default() -> Self {
         Node::new(NodeEmpty)

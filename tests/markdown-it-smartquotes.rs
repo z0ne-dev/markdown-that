@@ -4,12 +4,12 @@ fn run(input: &str, output: &str) {
     } else {
         output.to_owned() + "\n"
     };
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(md);
-    markdown_it::plugins::html::add(md);
-    markdown_it::plugins::extra::linkify::add(md);
-    markdown_it::plugins::extra::typographer::add(md);
-    markdown_it::plugins::extra::smartquotes::add(md);
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(md);
+    markdown_that::plugins::html::add(md);
+    markdown_that::plugins::extra::linkify::add(md);
+    markdown_that::plugins::extra::typographer::add(md);
+    markdown_that::plugins::extra::smartquotes::add(md);
     let node = md.parse(&(input.to_owned() + "\n"));
 
     // make sure we have sourcemaps for everything
@@ -24,7 +24,7 @@ fn run(input: &str, output: &str) {
 ///////////////////////////////////////////////////////////////////////////
 // TESTGEN: fixtures/markdown-it/smartquotes.txt
 #[rustfmt::skip]
-mod fixtures_markdown_it_smartquotes_txt {
+mod fixtures_markdown_that_smartquotes_txt {
 use super::run;
 // this part of the file is auto-generated
 // don't edit it, otherwise your changes might be lost

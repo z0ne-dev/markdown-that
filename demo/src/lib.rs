@@ -10,9 +10,9 @@ pub fn main() {
     let document = window.document().unwrap();
     let textarea = document.get_element_by_id("source").unwrap();
 
-    let mut parser = markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(&mut parser);
-    markdown_it::plugins::extra::add(&mut parser);
+    let mut parser = markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(&mut parser);
+    markdown_that::plugins::extra::add(&mut parser);
 
     let mut last_exec = 0f64;
     let timeout_ = std::rc::Rc::new(std::cell::Cell::new(None));
@@ -33,9 +33,9 @@ pub fn main() {
         ast.walk(|node, depth| {
             ast_str.push_str(&"    ".repeat(depth as usize));
             let name = &node.name()[node.name().rfind("::").map(|x| x+2).unwrap_or_default()..];
-            if let Some(data) = node.cast::<markdown_it::parser::inline::Text>() {
+            if let Some(data) = node.cast::<markdown_that::parser::inline::Text>() {
                 ast_str.push_str(&format!("{}: {:?}\n", name, data.content));
-            } else if let Some(data) = node.cast::<markdown_it::parser::inline::TextSpecial>() {
+            } else if let Some(data) = node.cast::<markdown_that::parser::inline::TextSpecial>() {
                 ast_str.push_str(&format!("{}: {:?}\n", name, data.content));
             } else {
                 ast_str.push_str(&format!("{}\n", name));

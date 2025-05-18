@@ -1,4 +1,4 @@
-//! Random assortment of functions that's used internally to write plugins.
+//! Random assortment of functions that are used internally to write plugins.
 
 use entities;
 use once_cell::sync::Lazy;
@@ -6,15 +6,13 @@ use regex::Regex;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-const UNESCAPE_MD_RE : &str = r##"\\([!"#$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~])"##;
-const ENTITY_RE      : &str = r##"&([A-Za-z#][A-Za-z0-9]{1,31});"##;
+const UNESCAPE_MD_RE: &str = r##"\\([!"#$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~])"##;
+const ENTITY_RE: &str = r##"&([A-Za-z#][A-Za-z0-9]{1,31});"##;
 
-static DIGITAL_ENTITY_TEST_RE : Lazy<Regex> = Lazy::new(||
-    Regex::new(r#"(?i)^&#(x[a-f0-9]{1,8}|[0-9]{1,8});$"#).unwrap()
-);
-static UNESCAPE_ALL_RE        : Lazy<Regex> = Lazy::new(||
-    Regex::new(&format!("{UNESCAPE_MD_RE}|{ENTITY_RE}")).unwrap()
-);
+static DIGITAL_ENTITY_TEST_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)^&#(x[a-f0-9]{1,8}|[0-9]{1,8});$"#).unwrap());
+static UNESCAPE_ALL_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(&format!("{UNESCAPE_MD_RE}|{ENTITY_RE}")).unwrap());
 
 #[allow(clippy::manual_range_contains)]
 /// Return true if a `code` you got from `&#xHHHH;` entity is a valid charcode.
@@ -23,34 +21,50 @@ static UNESCAPE_ALL_RE        : Lazy<Regex> = Lazy::new(||
 /// For example, it returns false for 0xFDD0, which is a valid character, but not safe to
 /// render on the screen due to turning you into stone, as per <https://xkcd.com/380/>
 /// ```
-/// # use markdown_it::common::utils::is_valid_entity_code;
+/// # use markdown_that::common::utils::is_valid_entity_code;
 /// assert_eq!(is_valid_entity_code(1), false);
 /// assert_eq!(is_valid_entity_code(32), true);
 /// ```
 pub fn is_valid_entity_code(code: u32) -> bool {
     // broken sequence
-    if code >= 0xD800 && code <= 0xDFFF { return false; }
+    if code >= 0xD800 && code <= 0xDFFF {
+        return false;
+    }
     // never used
-    if code >= 0xFDD0 && code <= 0xFDEF { return false; }
-    if (code & 0xFFFF) == 0xFFFF || (code & 0xFFFF) == 0xFFFE { return false; }
+    if code >= 0xFDD0 && code <= 0xFDEF {
+        return false;
+    }
+    if (code & 0xFFFF) == 0xFFFF || (code & 0xFFFF) == 0xFFFE {
+        return false;
+    }
     // control codes
-    if code <= 0x08 { return false; }
-    if code == 0x0B { return false; }
-    if code >= 0x0E && code <= 0x1F { return false; }
-    if code >= 0x7F && code <= 0x9F { return false; }
+    if code <= 0x08 {
+        return false;
+    }
+    if code == 0x0B {
+        return false;
+    }
+    if code >= 0x0E && code <= 0x1F {
+        return false;
+    }
+    if code >= 0x7F && code <= 0x9F {
+        return false;
+    }
     // out of range
-    if code > 0x10FFFF { return false; }
+    if code > 0x10FFFF {
+        return false;
+    }
     true
 }
 
 /// Check if "&xxxx;" string is a valid HTML entity, return character it represents.
 /// ```
-/// # use markdown_it::common::utils::get_entity_from_str;
+/// # use markdown_that::common::utils::get_entity_from_str;
 /// assert_eq!(get_entity_from_str("&amp;"), Some("&"));
 /// assert_eq!(get_entity_from_str("&xxx;"), None);
 /// ```
 pub fn get_entity_from_str(str: &str) -> Option<&'static str> {
-    pub static ENTITIES_HASH : Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+    pub static ENTITIES_HASH: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
         let mut mapping = HashMap::new();
         for e in &entities::ENTITIES {
             if e.entity.ends_with(';') {
@@ -63,12 +77,12 @@ pub fn get_entity_from_str(str: &str) -> Option<&'static str> {
     ENTITIES_HASH.get(str).copied()
 }
 
-#[allow(clippy::from_str_radix_10)]
 fn replace_entity_pattern(str: &str) -> Option<String> {
     if let Some(entity) = get_entity_from_str(str) {
         Some((*entity).to_owned())
     } else if let Some(captures) = DIGITAL_ENTITY_TEST_RE.captures(str) {
         let str = captures.get(1).unwrap().as_str();
+        #[allow(clippy::from_str_radix_10)]
         let code = if str.starts_with('x') || str.starts_with('X') {
             u32::from_str_radix(&str[1..], 16).unwrap()
         } else {
@@ -87,12 +101,14 @@ fn replace_entity_pattern(str: &str) -> Option<String> {
 
 /// Unescape both entities (`&quot; -> "`) and backslash escapes (`\" -> "`).
 /// ```
-/// # use markdown_it::common::utils::unescape_all;
+/// # use markdown_that::common::utils::unescape_all;
 /// assert_eq!(unescape_all("&amp;"), "&");
 /// assert_eq!(unescape_all("\\&"), "&");
 /// ```
 pub fn unescape_all(str: &str) -> Cow<str> {
-    if !str.contains('\\') && !str.contains('&') { return Cow::Borrowed(str); }
+    if !str.contains('\\') && !str.contains('&') {
+        return Cow::Borrowed(str);
+    }
 
     UNESCAPE_ALL_RE.replace_all(str, |captures: &regex::Captures| {
         let s = captures.get(0).unwrap().as_str();
@@ -108,26 +124,26 @@ pub fn unescape_all(str: &str) -> Cow<str> {
     })
 }
 
-/// Escape `" < > &` with corresponding HTML entities;
+/// Escape `< > " &` with corresponding HTML entities;
 /// ```
-/// # use markdown_it::common::utils::escape_html;
+/// # use markdown_that::common::utils::escape_html;
 /// assert_eq!(escape_html("&\""), "&amp;&quot;");
 /// ```
 pub fn escape_html(str: &str) -> Cow<str> {
     html_escape::encode_double_quoted_attribute(str)
 }
 
-/// Unicode case folding + space normalization, used for for reference labels.
+/// Unicode case folding and space normalization, used for reference labels.
 ///
-/// So that strings equal according to commonmark standard are converted to
+/// So that strings equal, according to the commonmark standard, are converted to
 /// the same string (lowercase/uppercase differences and spacing go away).
 /// ```
-/// # use markdown_it::common::utils::normalize_reference;
+/// # use markdown_that::common::utils::normalize_reference;
 /// assert_eq!(normalize_reference("hello"), normalize_reference("HELLO"));
 /// assert_eq!(normalize_reference("a   b"), normalize_reference("a b"));
 /// ```
 pub fn normalize_reference(str: &str) -> String {
-    static SPACE_RE : Lazy<Regex> = Lazy::new(|| Regex::new(r"\s+").unwrap());
+    static SPACE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\s+").unwrap());
 
     // Trim and collapse whitespace
     //
@@ -141,7 +157,7 @@ pub fn normalize_reference(str: &str) -> String {
     // İ, ϴ, ẞ, Ω, K, Å - those are already uppercased, but have differently
     // uppercased versions).
     //
-    // Here's an example showing how it happens. Lets take greek letter omega:
+    // Here's an example showing how it happens. Let's take greek letter omega:
     // uppercase U+0398 (Θ), U+03f4 (ϴ) and lowercase U+03b8 (θ), U+03d1 (ϑ)
     //
     // Unicode entries:
@@ -155,25 +171,25 @@ pub fn normalize_reference(str: &str) -> String {
     // But .toLowerCase() doesn't change ϑ (it's already lowercase),
     // and .toUpperCase() doesn't change ϴ (already uppercase).
     //
-    // Applying first lower then upper case normalizes any character:
+    // Applying the first lower than upper case normalizes any character:
     // '\u0398\u03f4\u03b8\u03d1'.toLowerCase().toUpperCase() === '\u0398\u0398\u0398\u0398'
     //
-    // Note: this is equivalent to unicode case folding; unicode normalization
-    // is a different step that is not required here.
+    // Note: this is equivalent to Unicode case folding; Unicode normalization
+    // is a different step not required here.
     //
-    // Final result should be uppercased, because it's later stored in an object
-    // (this avoid a conflict with Object.prototype members,
+    // The final result should be uppercased, because it's later stored in an object
+    // (this avoids a conflict with Object.prototype members,
     // most notably, `__proto__`)
     //
     str.to_lowercase().to_uppercase()
 }
 
-/// Count number of characters since last occurrence of `char`.
+/// Count number of characters since the last occurrence of `char`.
 ///
 /// Finds last occurrence of `char` in `source`, returns number of characters from
 /// that last occurrence. If char is not found, return number of characters total.
 /// ```
-/// # use markdown_it::common::utils::rfind_and_count;
+/// # use markdown_that::common::utils::rfind_and_count;
 /// assert_eq!(rfind_and_count("abcde", 'e'), 0);
 /// assert_eq!(rfind_and_count("abcde", 'b'), 3);
 /// assert_eq!(rfind_and_count("abcde", 'z'), 5);
@@ -181,18 +197,20 @@ pub fn normalize_reference(str: &str) -> String {
 pub fn rfind_and_count(source: &str, char: char) -> usize {
     let mut result = 0;
     for c in source.chars().rev() {
-        if c == char { break; }
+        if c == char {
+            break;
+        }
         result += 1;
     }
     result
 }
 
-/// Calculate number of spaces from `pos` to first non-space character or EOL.
+/// Calculate the number of spaces from `pos` to the first non-space character or EOL.
 ///
-/// Tabs are expanded to variable number of spaces with tabstop = 4.
+/// Tabs are expanded to a variable number of spaces with tabstop = 4.
 /// Returns relative indent and offset of first non-space character.
 /// ```
-/// # use markdown_it::common::utils::find_indent_of;
+/// # use markdown_that::common::utils::find_indent_of;
 /// assert_eq!(find_indent_of("\tfoo", 0), (4, 1));
 /// ```
 pub fn find_indent_of(line: &str, mut pos: usize) -> (usize, usize) {
@@ -210,7 +228,7 @@ pub fn find_indent_of(line: &str, mut pos: usize) -> (usize, usize) {
                 indent += 1;
                 pos += 1;
             }
-            _ => return ( indent, pos ),
+            _ => return (indent, pos),
         }
     }
 }
@@ -220,12 +238,12 @@ pub fn find_indent_of(line: &str, mut pos: usize) -> (usize, usize) {
 /// Input: a string of characters (presumed whitespaces, can be anything), where each one of
 /// them contributes 1 to indent (except for tabs, whose width may vary with tabstop = 4).
 ///
-/// If an indent would split a tab, that tab is replaced with 4 spaces.
+/// If an indent splits a tab, that tab is replaced with 4 spaces.
 ///
 /// Example: cut_right_whitespace_with_tabstops("\t\t", 6) would return "  \t" (two preceding
 /// spaces) because first tab gets expanded to 6 spaces.
 /// ```
-/// # use markdown_it::common::utils::cut_right_whitespace_with_tabstops;
+/// # use markdown_that::common::utils::cut_right_whitespace_with_tabstops;
 /// assert_eq!(cut_right_whitespace_with_tabstops("\t\t", 6), "  \t");
 /// ```
 pub fn cut_right_whitespace_with_tabstops(source: &str, indent: i32) -> Cow<str> {
@@ -245,9 +263,9 @@ pub fn cut_right_whitespace_with_tabstops(source: &str, indent: i32) -> Cow<str>
 /// See [cut_right_whitespace_with_tabstops](cut_right_whitespace_with_tabstops)
 /// for algorithm and details.
 ///
-/// Returns number of spaces + number of bytes to cut from the end.
+/// Returns number of spaces and number of bytes to cut from the end.
 /// ```
-/// # use markdown_it::common::utils::calc_right_whitespace_with_tabstops;
+/// # use markdown_that::common::utils::calc_right_whitespace_with_tabstops;
 /// assert_eq!(calc_right_whitespace_with_tabstops("\t\t", 6), (2, 1));
 /// ```
 pub fn calc_right_whitespace_with_tabstops(source: &str, mut indent: i32) -> (usize, usize) {
@@ -257,13 +275,13 @@ pub fn calc_right_whitespace_with_tabstops(source: &str, mut indent: i32) -> (us
     while indent > 0 {
         match chars.next() {
             Some((pos, '\t')) => {
-                // previous tab is guaranteed to finish at 0 modulo 4,
+                // the previous tab is guaranteed to finish at 0 modulo 4,
                 // so we can finish counting there
                 let indent_from_start = rfind_and_count(&source[..pos], '\t');
                 let tab_width = 4 - indent_from_start as i32 % 4;
 
                 if indent < tab_width {
-                    return ( indent as usize, start );
+                    return (indent as usize, start);
                 }
 
                 indent -= tab_width;
@@ -280,18 +298,18 @@ pub fn calc_right_whitespace_with_tabstops(source: &str, mut indent: i32) -> (us
         }
     }
 
-    ( 0, start )
+    (0, start)
 }
 
 /// Checks whether a given character should count as punctuation
 ///
-/// used to determine word boundaries, made to match the implementation of
+/// Used to determine word boundaries, made to match the implementation of
 /// `isPunctChar` from the JS library.
 /// This is currently implemented as a `match`, but might be simplified as a
 /// regex if benchmarking shows this to be beneficient.
 pub fn is_punct_char(ch: char) -> bool {
-    use unicode_general_category::get_general_category;
     use unicode_general_category::GeneralCategory::*;
+    use unicode_general_category::get_general_category;
 
     match get_general_category(ch) {
         // P
@@ -316,9 +334,9 @@ pub fn is_punct_char(ch: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::cut_right_whitespace_with_tabstops as cut_ws;
-    use super::rfind_and_count;
     use super::find_indent_of;
     use super::replace_entity_pattern;
+    use super::rfind_and_count;
     use super::unescape_all;
 
     #[test]
@@ -446,22 +464,29 @@ mod tests {
     fn test_unescape_all_xss() {
         assert_eq!(
             unescape_all(r#"javascript&#x3A;alert(1)"#),
-            r#"javascript:alert(1)"#);
+            r#"javascript:alert(1)"#
+        );
 
         assert_eq!(
             unescape_all(r#"&#74;avascript:alert(1)"#),
-            r#"Javascript:alert(1)"#);
+            r#"Javascript:alert(1)"#
+        );
 
         assert_eq!(
             unescape_all(r#"&#x26;#74;avascript:alert(1)"#),
-            r#"&#74;avascript:alert(1)"#);
+            r#"&#74;avascript:alert(1)"#
+        );
 
         assert_eq!(
             unescape_all(r#"\&#74;avascript:alert(1)"#),
-            r#"&#74;avascript:alert(1)"#);
+            r#"&#74;avascript:alert(1)"#
+        );
 
         assert_eq!(
-            unescape_all(r#"&#34;&#62;&#60;script&#62;alert&#40;&#34;xss&#34;&#41;&#60;/script&#62;"#),
-            r#""><script>alert("xss")</script>"#);
+            unescape_all(
+                r#"&#34;&#62;&#60;script&#62;alert&#40;&#34;xss&#34;&#41;&#60;/script&#62;"#
+            ),
+            r#""><script>alert("xss")</script>"#
+        );
     }
 }

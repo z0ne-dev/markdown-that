@@ -8,9 +8,9 @@
 //!  - code block highlighting using `syntect`
 //!
 //! ```rust
-//! let md = &mut markdown_it::MarkdownIt::new();
-//! markdown_it::plugins::cmark::add(md);
-//! markdown_it::plugins::extra::add(md);
+//! let md = &mut markdown_that::MarkdownThat::new();
+//! markdown_that::plugins::cmark::add(md);
+//! markdown_that::plugins::extra::add(md);
 //!
 //! let html = md.parse("hello ~~world~~").render();
 //! assert_eq!(html.trim(), r#"<p>hello <s>world</s></p>"#);
@@ -29,9 +29,9 @@ pub mod syntect;
 pub mod tables;
 pub mod typographer;
 
-use crate::MarkdownIt;
+use crate::MarkdownThat;
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     strikethrough::add(md);
     beautify_links::add(md);
     #[cfg(feature = "linkify")]

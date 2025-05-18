@@ -12,19 +12,19 @@ pub use rule::*;
 pub mod builtin;
 
 pub use builtin::inline_parser::InlineRoot;
-pub use builtin::skip_text::{Text, TextSpecial};
 use builtin::skip_text::TextScannerImpl;
+pub use builtin::skip_text::{Text, TextSpecial};
 
-use crate::{MarkdownIt, Node};
 use crate::common::TypeKey;
 use crate::common::ruler::Ruler;
 use crate::parser::extset::{InlineRootExtSet, RootExtSet};
+use crate::{MarkdownThat, Node};
 
 use super::node::NodeEmpty;
 
 type RuleFns = (
-    fn (&mut InlineState) -> Option<usize>,
-    fn (&mut InlineState) -> Option<(Node, usize)>,
+    fn(&mut InlineState) -> Option<usize>,
+    fn(&mut InlineState) -> Option<(Node, usize)>,
 );
 
 #[derive(Debug, Default)]
@@ -40,11 +40,11 @@ impl InlineParser {
         Self::default()
     }
 
-    /// Skip single token by running all rules in validation mode;
+    /// Skip a single token by running all rules in validation mode;
     /// returns `true` if any rule reported success
     ///
     pub fn skip_token(&self, state: &mut InlineState) {
-        stacker::maybe_grow(64*1024, 1024*1024, || {
+        stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
             let mut ok = None;
 
             if state.level < state.md.max_nesting {
@@ -81,12 +81,12 @@ impl InlineParser {
     /// Generate tokens for input range
     ///
     pub fn tokenize(&self, state: &mut InlineState) {
-        stacker::maybe_grow(64*1024, 1024*1024, || {
+        stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
             let end = state.pos_max;
 
             while state.pos < end {
                 // Try all possible rules.
-                // On success, rule should:
+                // On success, the rule should:
                 //
                 // - update `state.pos`
                 // - update `state.tokens`
@@ -107,7 +107,9 @@ impl InlineParser {
                     if !node.is::<NodeEmpty>() {
                         node.srcmap = state.get_map(state.pos - len, state.pos);
                         state.node.children.push(node);
-                        if state.pos >= end { break; }
+                        if state.pos >= end {
+                            break;
+                        }
                     }
                     continue;
                 }
@@ -127,7 +129,7 @@ impl InlineParser {
         src: String,
         srcmap: Vec<(usize, usize)>,
         node: Node,
-        md: &MarkdownIt,
+        md: &MarkdownThat,
         root_ext: &mut RootExtSet,
         inline_ext: &mut InlineRootExtSet,
     ) -> Node {

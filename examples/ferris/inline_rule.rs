@@ -1,7 +1,7 @@
 // Replaces `(\/)` with `🦀`.
 
-use markdown_it::parser::inline::{InlineRule, InlineState};
-use markdown_it::{MarkdownIt, Node, NodeValue, Renderer};
+use markdown_that::parser::inline::{InlineRule, InlineState};
+use markdown_that::{MarkdownThat, Node, NodeValue, Renderer};
 
 const CRAB_CLAW : &str = r#"(\/)"#;
 
@@ -55,7 +55,7 @@ impl InlineRule for FerrisInlineScanner {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     // insert this rule into inline subparser
     md.inline.add_rule::<FerrisInlineScanner>();
 }

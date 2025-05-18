@@ -1,11 +1,11 @@
 
 fn run(input: &str, output: &str) {
     let output = if output.is_empty() { "".to_owned() } else { output.to_owned() + "\n" };
-    let md = &mut markdown_it::MarkdownIt::new();
-    markdown_it::plugins::cmark::add(md);
-    markdown_it::plugins::html::add(md);
-    markdown_it::plugins::extra::typographer::add(md);
-    markdown_it::plugins::extra::tables::add(md);
+    let md = &mut markdown_that::MarkdownThat::new();
+    markdown_that::plugins::cmark::add(md);
+    markdown_that::plugins::html::add(md);
+    markdown_that::plugins::extra::typographer::add(md);
+    markdown_that::plugins::extra::tables::add(md);
     let node = md.parse(&(input.to_owned() + "\n"));
 
     // make sure we have sourcemaps for everything
@@ -21,7 +21,7 @@ fn run(input: &str, output: &str) {
 ///////////////////////////////////////////////////////////////////////////
 // TESTGEN: fixtures/markdown-it/tables.txt
 #[rustfmt::skip]
-mod fixtures_markdown_it_tables_txt {
+mod fixtures_markdown_that_tables_txt {
 use super::run;
 // this part of the file is auto-generated
 // don't edit it, otherwise your changes might be lost
@@ -814,7 +814,7 @@ fn a_list_takes_precedence_in_case_of_ambiguity() {
 ///////////////////////////////////////////////////////////////////////////
 // TESTGEN: fixtures/markdown-it/markdown-it-rs.txt
 #[rustfmt::skip]
-mod fixtures_markdown_it_markdown_it_rs_txt {
+mod fixtures_markdown_that_markdown_that_rs_txt {
 use super::run;
 // this part of the file is auto-generated
 // don't edit it, otherwise your changes might be lost

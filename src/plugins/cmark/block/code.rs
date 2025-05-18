@@ -4,7 +4,7 @@
 //!
 //! <https://spec.commonmark.org/0.30/#indented-code-block>
 use crate::parser::block::{BlockRule, BlockState};
-use crate::{MarkdownIt, Node, NodeValue, Renderer};
+use crate::{MarkdownThat, Node, NodeValue, Renderer};
 
 const CODE_INDENT: i32 = 4;
 
@@ -25,7 +25,7 @@ impl NodeValue for CodeBlock {
     }
 }
 
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.block.add_rule::<CodeScanner>();
     md.max_indent = CODE_INDENT;
 }

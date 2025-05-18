@@ -17,20 +17,20 @@ use crate::common::utils::normalize_reference;
 use crate::generics::inline::full_link;
 use crate::parser::block::{BlockRule, BlockState};
 use crate::parser::extset::RootExt;
-use crate::{MarkdownIt, Node, NodeValue};
+use crate::{MarkdownThat, Node, NodeValue};
 
 /// Storage for parsed references
 ///
 /// if you have some external source for your link references, you can add them like this:
 ///
 /// ```rust
-/// use markdown_it::parser::block::builtin::BlockParserRule;
-/// use markdown_it::parser::core::{CoreRule, Root};
-/// use markdown_it::plugins::cmark::block::reference::{ReferenceMap, DefaultReferenceMap, CustomReferenceMap};
-/// use markdown_it::{MarkdownIt, Node};
+/// use markdown_that::parser::block::builtin::BlockParserRule;
+/// use markdown_that::parser::core::{CoreRule, Root};
+/// use markdown_that::plugins::cmark::block::reference::{ReferenceMap, DefaultReferenceMap, CustomReferenceMap};
+/// use markdown_that::{MarkdownThat, Node};
 ///
-/// let md = &mut MarkdownIt::new();
-/// markdown_it::plugins::cmark::add(md);
+/// let md = &mut MarkdownThat::new();
+/// markdown_that::plugins::cmark::add(md);
 ///
 /// #[derive(Debug, Default)]
 /// struct RefMapOverride(DefaultReferenceMap);
@@ -54,7 +54,7 @@ use crate::{MarkdownIt, Node, NodeValue};
 ///
 /// struct AddCustomReferences;
 /// impl CoreRule for AddCustomReferences {
-///     fn run(root: &mut Node, _: &MarkdownIt) {
+///     fn run(root: &mut Node, _: &MarkdownThat) {
 ///         let data = root.cast_mut::<Root>().unwrap();
 ///         data.ext.insert(ReferenceMap::new(RefMapOverride::default()));
 ///     }
@@ -73,12 +73,12 @@ use crate::{MarkdownIt, Node, NodeValue};
 /// You can also view all references that user created by adding the following rule:
 ///
 /// ```rust
-/// use markdown_it::parser::core::{CoreRule, Root};
-/// use markdown_it::plugins::cmark::block::reference::{ReferenceMap, DefaultReferenceMap};
-/// use markdown_it::{MarkdownIt, Node};
+/// use markdown_that::parser::core::{CoreRule, Root};
+/// use markdown_that::plugins::cmark::block::reference::{ReferenceMap, DefaultReferenceMap};
+/// use markdown_that::{MarkdownThat, Node};
 ///
-/// let md = &mut MarkdownIt::new();
-/// markdown_it::plugins::cmark::add(md);
+/// let md = &mut MarkdownThat::new();
+/// markdown_that::plugins::cmark::add(md);
 ///
 /// let ast = md.parse("[hello]: world");
 /// let root = ast.node_value.downcast_ref::<Root>().unwrap();
@@ -191,7 +191,7 @@ impl ReferenceMapEntry {
 }
 
 /// Add plugin that parses markdown link references
-pub fn add(md: &mut MarkdownIt) {
+pub fn add(md: &mut MarkdownThat) {
     md.block.add_rule::<ReferenceScanner>();
 }
 
