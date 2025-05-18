@@ -1,0 +1,12 @@
+[package]
+name = "yaml-rust"
+version = "0.4.5"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+yaml-rust2 = "0.10.1"

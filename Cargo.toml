@@ -1,5 +1,6 @@
 [workspace]
-members = ["crates/*"]
+members = ["crates/*", "patches/*"]
+resolver = "3"
 
 [workspace.package]
 version = "0.7.0"
@@ -12,3 +13,6 @@ repository = "https://github.com/z0ne-dev/markdown-that"
 readme = "README.md"
 license = "MIT"
 edition = "2024"
+
+[patch.crates-io]
+yaml-rust = { version = "0.4.5", path = "patches/yaml-rust-wrapper" }
