@@ -37,7 +37,7 @@ educe = "0.6.0"
 entities = "1.0.1"
 html-escape = "0.2.13"
 linkify = { version = "0.10.0", optional = true }
-mdurl = "0.3.1"
+markdown-that-url = { path = "crates/markdown-that-url" }
 readonly = "0.2.13"
 regex = "1.11.1"
 stacker = "0.1.21"

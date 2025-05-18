@@ -51,7 +51,12 @@ impl LinkFormatter for MDLinkFormatter {
     }
 
     fn normalize_link(&self, url: &str) -> String {
-        mdurl::urlencode::encode(url, mdurl::urlencode::ENCODE_DEFAULT_CHARS, true).into()
+        markdown_that_url::urlencode::encode(
+            url,
+            markdown_that_url::urlencode::ENCODE_DEFAULT_CHARS,
+            true,
+        )
+        .into()
     }
 
     fn normalize_link_text(&self, url: &str) -> String {
